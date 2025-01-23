@@ -39,7 +39,7 @@ Both models support LoRA and full fine-tuning methods.
 1. **Clone the Repository**
    ```bash
    git clone <repository-url>
-   cd flux-pro-ft
+   cd Flux-1.1-Pro-Ultra---Fine-tuning-UI
    ```
 
 2. **Install Dependencies**
