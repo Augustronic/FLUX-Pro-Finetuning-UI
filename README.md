@@ -71,7 +71,7 @@ Both models support LoRA and full fine-tuning methods.
 ### Fine-tuning with Flux Pro
 
 1. **Prepare Your Training Data**
-   - Create a ZIP file containing your training images
+   - Create a Base64 encoded ZIP file containing your training images
    - Supported formats: JPG, PNG
    - Recommended: 15-20 high-quality images
    - Ensure consistent style/subject matter
