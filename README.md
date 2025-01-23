@@ -38,7 +38,7 @@ Both models support LoRA and full fine-tuning methods.
 
 1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/paresh795/Flux-1.1-Pro-Ultra---Fine-tuning-UI
    cd Flux-1.1-Pro-Ultra---Fine-tuning-UI
    ```
 
