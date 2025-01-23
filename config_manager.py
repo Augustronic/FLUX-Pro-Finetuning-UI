@@ -60,6 +60,7 @@ class ConfigManager:
         # Ensure storage paths exist
         storage = self.config["storage"]
         for dir_name in storage.values():
+            # Create parent directory first
             Path(dir_name).mkdir(exist_ok=True)
     
     def get_api_key(self) -> str:
