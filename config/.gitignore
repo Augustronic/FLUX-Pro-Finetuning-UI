@@ -1,0 +1,10 @@
+# Ignore user configuration
+config.json
+
+# Ignore generated files
+*.pyc
+__pycache__/
+
+# Ignore user data
+/data/
+/generated_images/ 
