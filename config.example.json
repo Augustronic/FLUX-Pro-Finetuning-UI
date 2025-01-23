@@ -2,7 +2,7 @@
     "api_key": "your-api-key-here",
     "api_host": "api.us1.bfl.ai",
     "storage": {
-        "models_dir": "data/models",
+        "models_dir": "data",
         "images_dir": "generated_images"
     }
 } 
