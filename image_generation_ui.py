@@ -373,11 +373,11 @@ class ImageGenerationUI:
             # Handle model refresh
             def refresh_models():
                 self.manager.refresh_models()
-                return gr.Dropdown.update(
-                    choices=[
+                return {
+                    "choices": [
                         self._format_model_choice(m) for m in self.manager.list_models()
                     ]
-                )
+                }
 
             refresh_btn.click(fn=refresh_models, inputs=[], outputs=[model_dropdown])
 
