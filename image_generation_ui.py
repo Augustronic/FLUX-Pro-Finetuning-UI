@@ -201,7 +201,7 @@ class ImageGenerationUI:
             gr.Markdown(
                 """
             # AI Image Generation
-            Generate images using your fine-tuned models.
+            Generate images using your finetuned models.
             
             **Important**: Make sure to include the model's trigger word in your prompt!
             """
@@ -229,7 +229,7 @@ class ImageGenerationUI:
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
-                            label="Select Model",
+                            label="Aix Select Model",
                             info="The model's trigger word is shown in parentheses",
                         )
                         refresh_btn = gr.Button("🔄")

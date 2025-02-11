@@ -1,0 +1,10 @@
+# Project specific
+.gradio/
+config.json
+model_metadata.json
+model_finetuned_ids.txt
+*.zip
+generated_images/
+data/
+
+# Local data

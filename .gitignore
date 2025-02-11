@@ -40,12 +40,12 @@ finetune_response.json
 *.zip
 generated_images/
 data/
+.gradio/
 
 # Logs
 *.log
 
 # Local data
-config/local_config.json 
 build_markdown.py
 gradio_docs_formatted.md
 gradio_docs_formatted.txt
