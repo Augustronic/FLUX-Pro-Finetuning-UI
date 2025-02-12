@@ -5,6 +5,8 @@ import requests
 from typing import Optional
 from pathlib import Path
 
+# Refer to https://docs.bfl.ml/ for details on request finetuning parameters.
+
 class FineTuneClient:
     def __init__(self, api_key: str, host: str = "api.us1.bfl.ai"):
         self.api_key = api_key

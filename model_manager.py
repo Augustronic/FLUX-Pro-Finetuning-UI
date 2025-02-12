@@ -8,6 +8,8 @@ import base64
 import requests
 from pathlib import Path
 
+# Refer to https://docs.bfl.ml/ for details on finetune listing parameters.
+
 @dataclass
 class ModelMetadata:
     finetune_id: str
