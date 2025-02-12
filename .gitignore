@@ -46,11 +46,3 @@ data/
 *.log
 
 # Local data
-build_markdown.py
-gradio_docs_formatted.txt
-gradio_docs.md
-gradio_docs.py
-cat.jpg
-dog.jpg
-gradio_docs_formatted.md
-SelectData.py
