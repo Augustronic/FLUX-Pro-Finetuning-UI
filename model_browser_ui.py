@@ -66,6 +66,10 @@ class ModelBrowserUI:
                     )
                 
                 with gr.Column(scale=1):
+                    with gr.Group():
+                        refresh_btn = gr.Button("🔄 Refresh models")
+                        status = gr.Textbox(label="Status", interactive=False)
+
                     # Quick copy section
                     gr.Markdown("### Quick copy")
                     selected_id = gr.Textbox(
@@ -78,17 +82,14 @@ class ModelBrowserUI:
                     )
             
             with gr.Row():
-                refresh_btn = gr.Button("🔄 Refresh models", variant="primary")
-                status = gr.Textbox(label="Status", interactive=False)
-            
-            # Model details section
-            with gr.Row():
-                with gr.Column():
+                with gr.Column(scale=4):
                     gr.Markdown("### Model details")
                     selected_model = gr.JSON(
                         label="Selected model metadata",
                         value={}
                     )
+                with gr.Column(scale=1):
+                    gr.Markdown("")
             
             # Handle refresh
             refresh_outputs = [model_table, status]

@@ -218,10 +218,6 @@ class FineTuneUI:
                         label="Training mode",
                         info="Select the type of training that best matches your dataset."
                     )
-                    with gr.Accordion("See training mode note", open=False):
-                        gr.Markdown("""
-                        <p style="color: #72a914">In "General" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
-                        """)
 
                 with gr.Column():
 
@@ -271,18 +267,15 @@ class FineTuneUI:
                         inputs=[finetune_type],
                         outputs=[learning_rate]
                     )
-                    with gr.Accordion("See learning rate notes", open=False):
-                        gr.Markdown("""
-                            <p style="color: #72a914;">Lower values can improve the result but might need more iterations to learn a concept. Higher values can allow you to train for less iterations at a potential loss in quality.</p>
-                            <p style="color: #72a914;">For finetuning type “LoRA”, values 10 times larger than for “Full” are recommended.</p>
-                        """)
                     
-                with gr.Column():                   
+                with gr.Column():               
                     finetuning_guide = gr.Markdown("""
                         # FLUX Finetuning Beta Guide
                         ## Overview
                         The BFL Finetuning API enables you to customize FLUX Pro and FLUX Ultra using 1 - 20 images of your own visual content, and optionally, text descriptions.
-                        ## Getting Started: Step-by-Step Guide
+                        """)
+                    with gr.Accordion("Getting Started: Step-by-Step Guide", open=False):
+                        gr.Markdown("""
                         1. Prepare Your Images
                             - Create a local folder containing your training images.
                             - Supported formats: JPG, JPEG, PNG, and WebP
@@ -302,6 +295,36 @@ class FineTuneUI:
                             - Once training is complete, use your model through the available endpoints.
                         """
                     )
+                    with gr.Accordion("Best Practices and Tips", open=False):
+                        gr.Markdown("""
+                        1. Enhancing Concept Representation
+                            - Try finetune_strength values >1 if the concept is not present
+                            - Increase the finetune_strength if the concept is not present or the identity preservation is not strong enough
+                            - Lower the finetune_strength if you are unable to generalize the concept into new settings or if the image has visible artifacts
+                        2. Character Training
+                            - Avoid multiple characters in single images
+                            - Use manual captions when multiple characters are unavoidable
+                            - Consider disabling auto-captioning in complex scenes or for complex concepts
+                        3. Quality Considerations
+                            - Use high-quality training images
+                            - Adjust learning rate based on training stability
+                            - Monitor training progress and adjust parameters as needed
+                        4. Prompting
+                            - Change the trigger word to something more contextual than "TOK". e.g. "mycstm sunglasses" for a product finetune on sunglasses.
+                            - Consider prepending the trigger word to your prompt: e.g. "mycstm sunglasses, a photo of mycstm sunglasses laying on grass"
+                            - For character and product consistency, it can help to briefly describe the person/product. This is not a must however. e.g. "mycstm man, a photograph of mycstm man, sitting on a park bench and smiling into the camera. mycstm man is a middle aged man with brown curly hair and a beard. He is wearing a cowboy hat."
+                            - For styles, appending "in the style of insert-your-trigger-word-here" will greatly help the style preservation e.g. "a kangaroo wearing ski goggles holding up a drink, in the style of mycstm watercolourstyle".
+                        """
+                    )
+                    with gr.Accordion("Note on training mode", open=False):
+                        gr.Markdown("""
+                            <p style="color: #72a914">In "General" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
+                        """)
+                    with gr.Accordion("Notes on learning rate", open=False):
+                        gr.Markdown("""
+                            <p style="color: #72a914;">Lower values can improve the result but might need more iterations to learn a concept. Higher values can allow you to train for less iterations at a potential loss in quality.</p>
+                            <p style="color: #72a914;">For finetuning type “LoRA”, values 10 times larger than for “Full” are recommended.</p>
+                        """)
             
             # Status checking section
             with gr.Row():

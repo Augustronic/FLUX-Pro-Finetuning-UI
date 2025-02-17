@@ -232,7 +232,7 @@ class ImageGenerationUI:
                             label="Select model",
                             info="The model's trigger word is shown in parentheses.",
                         )
-                        refresh_btn = gr.Button("🔄")
+                        refresh_btn = gr.Button("🔄 Refresh models")
 
                     prompt = gr.Textbox(
                         label="Prompt",
