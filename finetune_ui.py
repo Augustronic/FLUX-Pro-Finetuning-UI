@@ -213,18 +213,16 @@ class FineTuneUI:
                         placeholder="Word to trigger your model (e.g., 'TOK')"
                     )
                     training_mode = gr.Radio(
-                        choices=["general", "character", "style", "product"],
+                        choices=[["General", "general"], ["Character", "character"], ["Style", "style"], ["Product", "product"]],
                         value="general",
                         label="Training mode",
                         info="Select the type of training that best matches your dataset"
                     )
                     with gr.Accordion("See training mode note", open=False):
                         gr.Markdown("""
-                        <p style="color: lightgreen;">In "general" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
+                        <p style="color: lightgreen;">In "General" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
                         """)
 
-                    
-                    
                 with gr.Column():
 
                     # Update learning rate when finetune type changes
@@ -237,7 +235,7 @@ class FineTuneUI:
                         info="Automatically generate captions for training images"
                     )
                     priority = gr.Radio(
-                        choices=["speed", "quality", "high_res_only"],
+                        choices=[["Speed","speed"], ["Quality", "quality"], ["High-res only", "high_res_only"]],
                         value="quality",
                         label="Training priority"
                     )
@@ -255,7 +253,7 @@ class FineTuneUI:
                         info="Higher rank = more capacity but slower training"
                     )
                     finetune_type = gr.Radio(
-                        choices=["full", "lora"],
+                        choices=[["Full", "full"], ["LoRA", "lora"]],
                         value="full",
                         label="Finetuning type",
                         info="LoRA is faster and uses less resources"
@@ -276,7 +274,7 @@ class FineTuneUI:
                     with gr.Accordion("See learning rate notes", open=False):
                         gr.Markdown("""
                             <p style="color: lightgreen;">Lower values can improve the result but might need more iterations to learn a concept. Higher values can allow you to train for less iterations at a potential loss in quality.</p>
-                            <p style="color: lightgreen;">For finetune_type “lora”, values 10 times larger than for “full” are recommended.</p>
+                            <p style="color: lightgreen;">For finetuning type “LoRA”, values 10 times larger than for “Full” are recommended.</p>
                         """)
                     
                 with gr.Column():                   
