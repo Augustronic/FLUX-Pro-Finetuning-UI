@@ -1,5 +1,8 @@
+from pickle import INT
 import gradio as gr
 import time
+
+from numpy import int_
 from model_manager import ModelManager
 from typing import Tuple, Optional
 import json
@@ -105,7 +108,7 @@ class ImageGenerationUI:
             print(f"Model ID: {model_id}")
             print(f"Endpoint: {endpoint}")
             print(f"Prompt: {prompt}")
-            print(f"Raw Mode: {raw_mode}")
+            print(f"Raw mode: {raw_mode}")
 
             # Common parameters
             params = {
@@ -199,10 +202,7 @@ class ImageGenerationUI:
         """Create the image generation interface."""
         with gr.Blocks(title="AI Image Generation") as interface:
             gr.Markdown(
-                """
-            # AI Image Generation
-            Generate images using your finetuned models.
-            
+                """           
             **Important**: Make sure to include the model's trigger word in your prompt!
             """
             )
@@ -216,8 +216,8 @@ class ImageGenerationUI:
                             ("FLUX Pro Standard", self.ENDPOINT_STANDARD),
                         ],
                         value=self.ENDPOINT_ULTRA,
-                        label="Generation Endpoint",
-                        info="Select the generation endpoint to use",
+                        label="Generation endpoint",
+                        info="Select the generation endpoint to use.",
                     )
 
                     # Model selection and basic parameters
@@ -229,28 +229,28 @@ class ImageGenerationUI:
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
-                            label="Aix Select Model",
-                            info="The model's trigger word is shown in parentheses",
+                            label="Select model",
+                            info="The model's trigger word is shown in parentheses.",
                         )
                         refresh_btn = gr.Button("🔄")
 
                     prompt = gr.Textbox(
                         label="Prompt",
-                        placeholder="Enter your prompt (make sure to include the trigger word shown above)",
+                        placeholder="Enter your prompt (make sure to include the trigger word shown above).",
                         lines=3,
-                        info="Important: Include the model's trigger word in your prompt",
+                        info="Important: Include the model's trigger word in your prompt.",
                     )
 
                     negative_prompt = gr.Textbox(
-                        label="Negative Prompt (Optional)",
-                        placeholder="Enter things to avoid in the image",
+                        label="Negative prompt (optional)",
+                        placeholder="Enter things to avoid in the image.",
                         lines=2,
                     )
 
                 with gr.Column():
                     # Advanced parameters
                     with gr.Group():
-                        gr.Markdown("### Image Parameters")
+                        gr.Markdown("### Image parameters")
 
                         # Parameters for Ultra endpoint
                         with gr.Column(visible=True) as ultra_params:
@@ -266,9 +266,9 @@ class ImageGenerationUI:
                                     "9:16",
                                     "9:21",
                                 ],
-                                value="16:9",
-                                label="Aspect Ratio",
-                                info="Select image dimensions ratio (between 21:9 and 9:21)",
+                                value="1:1",
+                                label="Aspect ratio",
+                                info="Select image dimensions ratio.",
                             )
 
                             strength = gr.Slider(
@@ -276,8 +276,8 @@ class ImageGenerationUI:
                                 maximum=2.0,
                                 value=1.2,
                                 step=0.1,
-                                label="Model Strength",
-                                info="How strongly to apply the model's style (default: 1.2)",
+                                label="Model strength",
+                                info="How strongly to apply the model's style (default: 1.2).",
                             )
 
                         # Parameters for Standard endpoint
@@ -303,68 +303,68 @@ class ImageGenerationUI:
                             num_steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
-                                value=40,
+                                value=42,
                                 step=1,
-                                label="Number of Steps",
+                                label="Number of steps",
                                 info="More steps = higher quality but slower",
                             )
 
                             guidance_scale = gr.Slider(
                                 minimum=1.5,
                                 maximum=5.0,
-                                value=2.5,
+                                value=3.5,
                                 step=0.1,
-                                label="Guidance Scale",
+                                label="Guidance scale",
                                 info="How closely to follow the prompt",
                             )
 
                             prompt_upsampling = gr.Checkbox(
-                                label="Prompt Upsampling",
+                                label="Prompt upsampling",
                                 value=False,
-                                info="Automatically modify prompt for more creative generation",
+                                info="Automatically modify prompt for more creative generation.",
                             )
 
                             raw_mode = gr.Checkbox(
-                                label="Raw Mode",
+                                label="Raw mode",
                                 value=False,
-                                info="Enable raw mode for more realistic results",
+                                info="Enable raw mode for more realistic results.   ",
                             )
 
                         # Common parameters
                         seed = gr.Number(
                             label="Seed",
-                            value=None,
+                            value=0,
                             precision=0,
                             minimum=0,
-                            maximum=2147483647,
-                            info="Leave empty for random seed, or set a specific value for reproducible results",
+                            maximum=9999999999,
+                            info="Leave empty for random seed, or set a specific value for reproducible results.",
                         )
 
                         safety_tolerance = gr.Slider(
                             minimum=0,
                             maximum=6,
-                            value=2,
+                            value=3,
                             step=1,
-                            label="Safety Tolerance",
-                            info="0 (most strict) to 6 (least strict)",
+                            label="Safety tolerance",
+                            info="0 (most strict) to 6 (least strict).",
                         )
 
                         output_format = gr.Radio(
                             choices=["jpeg", "png"],
-                            value="jpeg",
-                            label="Output Format",
-                            info="Select the image format",
+                            value="png",
+                            label="Output format",
+                            info="Select the image format.",
                         )
 
             # Output section
             with gr.Row():
                 with gr.Column():
-                    generate_btn = gr.Button("Generate Image", variant="primary")
+                    generate_btn = gr.Button("Generate image", variant="primary")
                     status_text = gr.Textbox(label="Status", interactive=False)
 
                 with gr.Column():
                     output_image = gr.Image(
-                        label="Generated Image",
+                        label="Generated image",
                         type="filepath",
                         interactive=False,
                         show_download_button=True,

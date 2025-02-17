@@ -39,9 +39,6 @@ class ModelBrowserUI:
     def create_ui(self) -> gr.Blocks:
         """Create the model browser interface."""
         with gr.Blocks(title="Model Browser") as interface:
-            gr.Markdown("""
-            Click Refresh to fetch the latest models from the API.
-            """)
             
             # Model list
             columns = [
@@ -56,14 +53,14 @@ class ModelBrowserUI:
                 "Priority",
                 "Timestamp"
             ]
-            
+
             with gr.Row():
                 with gr.Column(scale=4):
                     model_table = gr.Dataframe(
                         headers=columns,
                         datatype=["str"] * len(columns),
                         value=self.get_models_df(),
-                        label="Trained models",
+                        label="Click Refresh to fetch the latest models from the API.",
                         interactive=False,
                         wrap=False
                     )

@@ -34,7 +34,7 @@ class FineTuneUI:
         
         # Ensure it's a ZIP file
         if not original_filename.lower().endswith('.zip'):
-            return None, "Please upload a ZIP file"
+            return None, "Please upload a ZIP file."
             
         # Create a copy in our working directory
         save_path = os.path.join(os.getcwd(), original_filename)
@@ -44,7 +44,7 @@ class FineTuneUI:
                 dst.write(src.read())
                 
             if os.path.getsize(save_path) == 0:
-                return None, "Uploaded file is empty"
+                return None, "Uploaded file is empty."
                 
             return save_path, f"File saved as {original_filename}"
             
@@ -54,7 +54,7 @@ class FineTuneUI:
     def check_status(self, finetune_id: str) -> str:
         """Check the status of a finetuning job."""
         if not finetune_id:
-            return "Please enter a finetune ID"
+            return "Please enter a finetune ID."
             
         try:
             # Get status details
@@ -155,7 +155,7 @@ class FineTuneUI:
                 
             # Validate inputs
             if not all([model_name, trigger_word]):
-                return "Model name and trigger word are required"
+                return "Model name and trigger word are required."
                 
             # Start fine-tuning
             result = self.client.start_finetune(
@@ -172,7 +172,7 @@ class FineTuneUI:
             )
             
             if not result or 'finetune_id' not in result:
-                return "Failed to start finetuning job"
+                return "Failed to start finetuning job."
                 
             finetune_id = result['finetune_id']
             self.current_job_id = finetune_id
@@ -206,17 +206,17 @@ class FineTuneUI:
                     )
                     model_name = gr.Textbox(
                         label="Model name",
-                        placeholder="Enter a name for your finetuned model"
+                        placeholder="Enter a name for your finetuned model."
                     )
                     trigger_word = gr.Textbox(
                         label="Trigger word",
-                        placeholder="Word to trigger your model (e.g., 'TOK')"
+                        placeholder="Word to trigger your model (e.g., 'TOK')."
                     )
                     training_mode = gr.Radio(
                         choices=[["General", "general"], ["Character", "character"], ["Style", "style"], ["Product", "product"]],
                         value="general",
                         label="Training mode",
-                        info="Select the type of training that best matches your dataset"
+                        info="Select the type of training that best matches your dataset."
                     )
                     with gr.Accordion("See training mode note", open=False):
                         gr.Markdown("""
@@ -232,7 +232,7 @@ class FineTuneUI:
                     captioning = gr.Checkbox(
                         label="Enable auto-captioning",
                         value=True,
-                        info="Automatically generate captions for training images"
+                        info="Automatically generate captions for training images."
                     )
                     priority = gr.Radio(
                         choices=[["Speed","speed"], ["Quality", "quality"], ["High-res only", "high_res_only"]],
@@ -250,20 +250,20 @@ class FineTuneUI:
                         choices=[16, 32],
                         value=32,
                         label="LoRA rank",
-                        info="Higher rank = more capacity but slower training"
+                        info="Higher rank = more capacity but slower training."
                     )
                     finetune_type = gr.Radio(
                         choices=[["Full", "full"], ["LoRA", "lora"]],
                         value="full",
                         label="Finetuning type",
-                        info="LoRA is faster and uses less resources"
+                        info="LoRA is faster and uses less resources."
                     )
                     learning_rate = gr.Number(
                         label="Learning rate",
                         value=0.00001,
                         minimum=0.000001,
                         maximum=0.005,
-                        info="Automatically set based on finetune type"
+                        info="Automatically set based on finetune type."
                     )
                     # Connect finetune_type change to learning_rate update
                     finetune_type.change(
@@ -308,7 +308,7 @@ class FineTuneUI:
                 with gr.Column():
                     finetune_id = gr.Textbox(
                         label="Finetune ID",
-                        placeholder="Enter your finetune ID to check status",
+                        placeholder="Enter your finetune ID to check status.",
                         value=lambda: self.current_job_id if self.current_job_id else ""
                     )
                     check_status_btn = gr.Button("Check status", variant="primary")
