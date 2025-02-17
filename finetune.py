@@ -31,7 +31,7 @@ class FineTuneClient:
         priority: str = 'quality',
         auto_caption: bool = True
     ) -> dict:
-        """Start a fine-tuning job."""
+        """Start a finetuning job."""
         try:
             # Validate file exists
             if not os.path.exists(file_path):
@@ -66,13 +66,13 @@ class FineTuneClient:
                 "X-Key": self.api_key
             }
             
-            print(f"\nStarting fine-tune for model: {model_name}")
+            print(f"\nStarting finetune for model: {model_name}")
             print(f"Parameters:")
             print(f"- Mode: {mode}")
             print(f"- Type: {finetune_type}")
             print(f"- Iterations: {iterations}")
             if lora_rank:
-                print(f"- LoRA Rank: {lora_rank}")
+                print(f"- LoRA rank: {lora_rank}")
             
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
@@ -107,11 +107,11 @@ class FineTuneClient:
                 print(f"Response: {e.response.text}")
             raise
         except Exception as e:
-            print(f"Error starting fine-tune: {e}")
+            print(f"Error starting finetune: {e}")
             raise
     
     def check_status(self, finetune_id: str) -> dict:
-        """Check the status of a fine-tuning job."""
+        """Check the status of a finetuning job."""
         try:
             url = f"https://{self.host}/v1/finetune_details"
             headers = {"X-Key": self.api_key}
@@ -129,7 +129,7 @@ class FineTuneClient:
             return None
     
     def list_finetunes(self) -> dict:
-        """List all fine-tunes."""
+        """List all finetunes."""
         try:
             url = f"https://{self.host}/v1/my_finetunes"
             headers = {"X-Key": self.api_key}
@@ -140,7 +140,7 @@ class FineTuneClient:
             return response.json()
             
         except requests.exceptions.RequestException as e:
-            print(f"Error listing fine-tunes: {e}")
+            print(f"Error listing finetunes: {e}")
             if hasattr(e.response, 'text'):
                 print(f"Response: {e.response.text}")
             return None
@@ -166,7 +166,7 @@ if __name__ == "__main__":
             priority="quality",
             auto_caption=True
         )
-        print("\nFine-tuning job started successfully:")
+        print("\nFinetuning job started successfully:")
         print(json.dumps(result, indent=2))
         
         # Store the response for tracking
@@ -174,6 +174,6 @@ if __name__ == "__main__":
             json.dump(result, f, indent=2)
             
     except Exception as e:
-        print(f"\nError running fine-tuning: {e}")
+        print(f"\nError running finetuning: {e}")
         if isinstance(e, FileNotFoundError):
             print("\nPlease check that your ZIP file exists at the specified path and is properly zipped.") 
