@@ -205,8 +205,8 @@ class FineTuneUI:
                         file_types=[".zip"]
                     )
                     model_name = gr.Textbox(
-                    label="Model name",
-                    placeholder="Enter a name for your finetuned model"
+                        label="Model name",
+                        placeholder="Enter a name for your finetuned model"
                     )
                     trigger_word = gr.Textbox(
                         label="Trigger word",
@@ -220,7 +220,7 @@ class FineTuneUI:
                     )
                     with gr.Accordion("See training mode note", open=False):
                         gr.Markdown("""
-                        <p style="color: lightgreen;">In "General" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
+                        <p style="color: #72a914">In "General" mode, the entire image is captioned when captioning is True without specific focus areas. No subject specific improvements will be made.</p>
                         """)
 
                 with gr.Column():
@@ -273,8 +273,8 @@ class FineTuneUI:
                     )
                     with gr.Accordion("See learning rate notes", open=False):
                         gr.Markdown("""
-                            <p style="color: lightgreen;">Lower values can improve the result but might need more iterations to learn a concept. Higher values can allow you to train for less iterations at a potential loss in quality.</p>
-                            <p style="color: lightgreen;">For finetuning type “LoRA”, values 10 times larger than for “Full” are recommended.</p>
+                            <p style="color: #72a914;">Lower values can improve the result but might need more iterations to learn a concept. Higher values can allow you to train for less iterations at a potential loss in quality.</p>
+                            <p style="color: #72a914;">For finetuning type “LoRA”, values 10 times larger than for “Full” are recommended.</p>
                         """)
                     
                 with gr.Column():                   
@@ -287,7 +287,7 @@ class FineTuneUI:
                             - Create a local folder containing your training images.
                             - Supported formats: JPG, JPEG, PNG, and WebP
                             - Recommended are more than 5 images.
-                        <br/><p style="color: lightgreen;">High-quality datasets with clear, articulated subjects/objects/styles significantly improve training results. Higher resolution source images help but are capped at 1MP.</p>
+                        <br/><p style="color: #72a914;">High-quality datasets with clear, articulated subjects/objects/styles significantly improve training results. Higher resolution source images help but are capped at 1MP.</p>
                         2. Add Text Descriptions (Optional)
                             - Create text files with descriptions for your images.
                             - Text files should share the same name as their corresponding images.

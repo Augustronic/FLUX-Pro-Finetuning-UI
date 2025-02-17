@@ -40,20 +40,19 @@ class ModelBrowserUI:
         """Create the model browser interface."""
         with gr.Blocks(title="Model Browser") as interface:
             gr.Markdown("""
-            # Model Browser
-            View and manage your trained models. Click Refresh to fetch the latest models from the API.
+            Click Refresh to fetch the latest models from the API.
             """)
             
             # Model list
-            headers = [
-                "Model Name",
-                "Fine-tune ID",
-                "Trigger Word",
+            columns = [
+                "Model name",
+                "Finetune ID",
+                "Trigger word",
                 "Type",
                 "Mode",
                 "Rank",
                 "Iterations",
-                "Learning Rate",
+                "Learning rate",
                 "Priority",
                 "Timestamp"
             ]
@@ -61,36 +60,36 @@ class ModelBrowserUI:
             with gr.Row():
                 with gr.Column(scale=4):
                     model_table = gr.Dataframe(
-                        headers=headers,
-                        datatype=["str"] * len(headers),
+                        headers=columns,
+                        datatype=["str"] * len(columns),
                         value=self.get_models_df(),
-                        label="Trained Models",
+                        label="Trained models",
                         interactive=False,
                         wrap=True
                     )
                 
                 with gr.Column(scale=1):
                     # Quick copy section
-                    gr.Markdown("### Quick Copy")
+                    gr.Markdown("### Quick copy")
                     selected_id = gr.Textbox(
-                        label="Selected Model ID",
+                        label="Selected model ID",
                         interactive=False
                     )
                     selected_trigger = gr.Textbox(
-                        label="Trigger Word",
+                        label="Trigger word",
                         interactive=False
                     )
             
             with gr.Row():
-                refresh_btn = gr.Button("🔄 Refresh Models", variant="primary")
+                refresh_btn = gr.Button("🔄 Refresh models", variant="primary")
                 status = gr.Textbox(label="Status", interactive=False)
             
             # Model details section
             with gr.Row():
                 with gr.Column():
-                    gr.Markdown("### Model Details")
+                    gr.Markdown("### Model details")
                     selected_model = gr.JSON(
-                        label="Selected Model Metadata",
+                        label="Selected model metadata",
                         value={}
                     )
             
@@ -107,20 +106,20 @@ class ModelBrowserUI:
                 try:
                     row = data[evt.index[0]]  # Get the selected row
                     model_info = {
-                        "Model Name": row[0],
-                        "Fine-tune ID": row[1],
-                        "Trigger Word": row[2],
+                        "Model name": row[0],
+                        "Finetune ID": row[1],
+                        "Trigger word": row[2],
                         "Type": row[3],
                         "Mode": row[4],
                         "Rank": row[5],
                         "Iterations": row[6],
-                        "Learning Rate": row[7],
+                        "Learning rate": row[7],
                         "Priority": row[8],
                         "Timestamp": row[9]
                     }
                     return (
                         json.dumps(model_info, indent=2),
-                        row[1],  # Fine-tune ID
+                        row[1],  # Finetune ID
                         row[2]   # Trigger word
                     )
                 except Exception as e:
