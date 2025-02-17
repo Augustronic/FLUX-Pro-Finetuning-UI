@@ -65,7 +65,7 @@ class ModelBrowserUI:
                         value=self.get_models_df(),
                         label="Trained models",
                         interactive=False,
-                        wrap=True
+                        wrap=False
                     )
                 
                 with gr.Column(scale=1):
@@ -102,9 +102,9 @@ class ModelBrowserUI:
             )
             
             # Update details when model is selected
-            def update_selection(evt: gr.SelectData, data: List[List[str]]) -> tuple:
+            def update_selection(evt: gr.SelectData, data) -> tuple:
                 try:
-                    row = data[evt.index[0]]  # Get the selected row
+                    row = data.iloc[evt.index[0]].tolist()  # Get the selected row using iloc for pandas DataFrame
                     model_info = {
                         "Model name": row[0],
                         "Finetune ID": row[1],
@@ -136,4 +136,4 @@ class ModelBrowserUI:
                 outputs=[selected_model, selected_id, selected_trigger]
             )
             
-        return interface 
+        return interface
