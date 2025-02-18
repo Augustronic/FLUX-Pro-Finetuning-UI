@@ -22,14 +22,14 @@ try:
     # Make request exactly as shown in docs, ensuring we hit the API endpoint
     endpoint = f"/v1/finetune_details?finetune_id={FINETUNE_ID}"
     print(f"\nMaking request to: {conn.host}{endpoint}")
-    
+
     conn.request("GET", endpoint, headers=headers)
     res = conn.getresponse()
     data = res.read()
-    
+
     print(f"\nResponse Status: {res.status}")
     print(f"Response Headers: {dict(res.getheaders())}")
-    
+
     # Try to parse as JSON
     try:
         json_response = json.loads(data.decode('utf-8'))
@@ -38,8 +38,8 @@ try:
     except json.JSONDecodeError:
         print("\nResponse Body (raw):")
         print(data.decode('utf-8'))
-    
+
 except Exception as e:
     print(f"Error: {e}")
 finally:
-    conn.close() 
+    conn.close()

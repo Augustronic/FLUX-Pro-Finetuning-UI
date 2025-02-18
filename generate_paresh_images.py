@@ -3,13 +3,15 @@ import json
 import time
 from typing import Optional
 
+
 # Refer to https://docs.bfl.ml/ for details on finetune inference parameters.
+
 
 class ImageGenerator:
     def __init__(self, api_key: str, host: str = "api.us1.bfl.ai"):
         self.api_key = api_key
         self.host = host
-        
+
     def request_inference(
         self,
         finetune_id: str,
@@ -30,7 +32,7 @@ class ImageGenerator:
             'Content-Type': 'application/json',
             'X-Key': self.api_key
         }
-        
+
         # Prepare payload based on the example code
         payload = {
             "finetune_id": finetune_id,
@@ -43,20 +45,26 @@ class ImageGenerator:
             "guidance_scale": guidance_scale,
             "scheduler": scheduler
         }
-        
+
         if negative_prompt:
             payload["negative_prompt"] = negative_prompt
-            
+
         try:
             print(f"\nRequesting image generation with prompt: {prompt}")
-            conn.request("POST", f"/v1/{endpoint}", body=json.dumps(payload), headers=headers)
+            endpoint_url = f"/v1/{endpoint}"
+            conn.request(
+                "POST",
+                endpoint_url,
+                body=json.dumps(payload),
+                headers=headers
+            )
             res = conn.getresponse()
             data = res.read()
-            
+
             return json.loads(data.decode('utf-8'))
         finally:
             conn.close()
-            
+
     def get_result(self, inference_id: str) -> dict:
         """Get the result of an inference request."""
         conn = http.client.HTTPSConnection(self.host)
@@ -64,17 +72,18 @@ class ImageGenerator:
             'Content-Type': 'application/json',
             'X-Key': self.api_key
         }
-        
+
         try:
             endpoint = f"/v1/get_result?id={inference_id}"
             conn.request("GET", endpoint, headers=headers)
             res = conn.getresponse()
             data = res.read()
-            
+
             return json.loads(data.decode('utf-8'))
         finally:
             conn.close()
-            
+
+
 def generate_image(
     api_key: str,
     finetune_id: str,
@@ -83,7 +92,7 @@ def generate_image(
     max_attempts: int = 60  # 5 minutes max
 ):
     generator = ImageGenerator(api_key)
-    
+
     # Request image generation
     print("\nStarting image generation...")
     try:
@@ -91,21 +100,22 @@ def generate_image(
             finetune_id=finetune_id,
             prompt=prompt
         )
-        
+
         if 'id' not in response:
             print("Error: No inference ID received")
             print("Response:", json.dumps(response, indent=2))
             return
-            
+
         inference_id = response['id']
         print(f"Inference ID: {inference_id}")
-        
+
         # Monitor progress
         attempts = 0
         while attempts < max_attempts:
             result = generator.get_result(inference_id)
-            print(f"\nCheck #{attempts + 1} - Status: {result.get('status', 'Unknown')}")
-            
+            status = result.get('status', 'Unknown')
+            print(f"\nCheck #{attempts + 1} - Status: {status}")
+
             if result.get('status') == 'Ready':
                 print("\nImage generation complete!")
                 print("\nResult:")
@@ -116,37 +126,50 @@ def generate_image(
                 print("\nError details:")
                 print(json.dumps(result, indent=2))
                 return result
-                
+
             attempts += 1
             print(f"Waiting {check_interval} seconds before next check...")
             time.sleep(check_interval)
-            
+
         print("\nTimeout: Maximum attempts reached")
-        
+
     except Exception as e:
         print(f"Error during image generation: {e}")
+
 
 if __name__ == "__main__":
     # Your configuration
     API_KEY = "21006105-1bcc-4969-abab-97e55051d7a3"
-    FINETUNE_ID = "7fca3c9d-ce9f-4e7a-83c4-6761d67d223f"  # Your new model ID
-    
+    # Your new model ID
+    FINETUNE_ID = "7fca3c9d-ce9f-4e7a-83c4-6761d67d223f"
+
     # Example prompts using your trigger word
     prompts = [
-        "a professional portrait of pareshranaut in a business suit, high quality, studio lighting",
-        "pareshranaut giving a presentation in a modern office, 8k, professional photography",
-        "close-up shot of pareshranaut smiling, natural lighting, detailed, professional headshot"
+        (
+            "a professional portrait of pareshranaut in a business suit, "
+            "high quality, studio lighting"
+        ),
+        (
+            "pareshranaut giving a presentation in a modern office, 8k, "
+            "professional photography"
+        ),
+        (
+            "close-up shot of pareshranaut smiling, natural lighting, "
+            "detailed, professional headshot"
+        )
     ]
-    
+
     # Generate an image with each prompt
     for i, prompt in enumerate(prompts, 1):
         print(f"\n=== Generating Image #{i} ===")
         result = generate_image(API_KEY, FINETUNE_ID, prompt)
-        
+
         if result and result.get('status') == 'Ready':
-            print(f"\nImage #{i} URL: {result.get('result', {}).get('sample')}")
-        
+            result_data = result.get('result', {})
+            url = result_data.get('sample')
+            print(f"\nImage #{i} URL: {url}")
+
         # Wait between generations
         if i < len(prompts):
             print("\nWaiting 10 seconds before next generation...")
-            time.sleep(10) 
+            time.sleep(10)

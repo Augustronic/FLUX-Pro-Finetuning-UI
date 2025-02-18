@@ -1,12 +1,13 @@
 import gradio as gr
 from model_manager import ModelManager
-from typing import List, Dict
+from typing import List
 import json
+
 
 class ModelBrowserUI:
     def __init__(self, model_manager: ModelManager):
         self.manager = model_manager
-        
+
     def _format_model_info(self, model) -> List[str]:
         """Format model information for the dataframe."""
         return [
@@ -21,25 +22,23 @@ class ModelBrowserUI:
             model.priority.capitalize() if model.priority else "N/A",
             model.timestamp if model.timestamp else "N/A"
         ]
-        
+
     def get_models_df(self) -> List[List[str]]:
         """Get all models formatted as a dataframe."""
         models = self.manager.list_models()
         return [self._format_model_info(model) for model in models]
-    
+
     def refresh_models(self) -> tuple:
         """Refresh models from API and update display."""
         self.manager.refresh_models()
         models_data = self.get_models_df()
-        return (
-            models_data,
-            "Models refreshed successfully!" if models_data else "No models found or error refreshing"
-        )
-    
+        msg = ("Models refreshed successfully!"
+               if models_data else "No models found or error refreshing")
+        return (models_data, msg)
+
     def create_ui(self) -> gr.Blocks:
         """Create the model browser interface."""
         with gr.Blocks(title="Model Browser") as interface:
-            
             # Model list
             columns = [
                 "Model name",
@@ -58,13 +57,13 @@ class ModelBrowserUI:
                 with gr.Column(scale=4):
                     model_table = gr.Dataframe(
                         headers=columns,
-                        datatype=["str"] * len(columns),
+                        datatype="str",
                         value=self.get_models_df(),
-                        label="Click Refresh to fetch the latest models from the API.",
+                        label="Click Refresh to fetch the latest models.",
                         interactive=False,
                         wrap=False
                     )
-                
+
                 with gr.Column(scale=1):
                     with gr.Group():
                         refresh_btn = gr.Button("🔄 Refresh models")
@@ -80,7 +79,7 @@ class ModelBrowserUI:
                         label="Trigger word",
                         interactive=False
                     )
-            
+
             with gr.Row():
                 with gr.Column(scale=4):
                     gr.Markdown("### Model details")
@@ -90,7 +89,7 @@ class ModelBrowserUI:
                     )
                 with gr.Column(scale=1):
                     gr.Markdown("")
-            
+
             # Handle refresh
             refresh_outputs = [model_table, status]
             refresh_btn.click(
@@ -98,11 +97,12 @@ class ModelBrowserUI:
                 inputs=[],
                 outputs=refresh_outputs
             )
-            
+
             # Update details when model is selected
             def update_selection(evt: gr.SelectData, data) -> tuple:
                 try:
-                    row = data.iloc[evt.index[0]].tolist()  # Get the selected row using iloc for pandas DataFrame
+                    # Get the selected row using iloc for pandas DataFrame
+                    row = data.iloc[evt.index[0]].tolist()
                     model_info = {
                         "Model name": row[0],
                         "Finetune ID": row[1],
@@ -127,11 +127,11 @@ class ModelBrowserUI:
                         "",
                         ""
                     )
-            
+
             model_table.select(
                 fn=update_selection,
                 inputs=[model_table],
                 outputs=[selected_model, selected_id, selected_trigger]
             )
-            
+
         return interface

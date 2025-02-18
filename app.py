@@ -23,45 +23,55 @@ def create_app():
         gr.Markdown(
             """
         <div style="text-align: center; margin: 0 auto; padding: 0 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 600; margin: 1rem 0; color: #72a914;">FLUX Pro Finetuning UI</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 2rem;">Train custom models, browse your collection and generate images.</p>
+            <h1 style="font-size: 2.5rem; font-weight: 600; margin: 1rem 0;
+                color: #72a914;">
+                FLUX Pro Finetuning UI
+            </h1>
+            <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+                Train custom models, browse your collection and generate
+                images.
+            </p>
         </div>
         """
         )
 
-        with gr.Tabs() as tabs:
+        with gr.Tabs():
             with gr.Tab("Finetune Model"):
                 gr.Markdown(
                     """
                 <div style="text-align: center; padding: 0rem 1rem 2rem;">
-                    <h2 style="font-size: 1.8rem; font-weight: 600; color: #72a914;">Model Finetuning</h2>
-                    <p>Upload your training dataset and configure finetuning parameters.</p>
+                    <h2 style="font-size: 1.8rem; font-weight: 600;
+                        color: #72a914;">Model Finetuning</h2>
+                    <p>Upload your training dataset and configure finetuning
+                        parameters.</p>
                 </div>
                 """
-                 )
-                finetune_interface = finetune_ui.create_ui()
+                )
+                finetune_ui.create_ui()
 
             with gr.Tab("Model Browser"):
                 gr.Markdown(
                     """
                 <div style="text-align: center; margin: 1rem 0;">
-                    <h2 style="font-size: 1.8rem; font-weight: 600; color: #72a914;">Model Browser</h2>
+                    <h2 style="font-size: 1.8rem; font-weight: 600;
+                        color: #72a914;">Model Browser</h2>
                     <p>View and manage your finetuned models.</p>
                 </div>
                 """
                 )
-                browser_interface = model_browser_ui.create_ui()
+                model_browser_ui.create_ui()
 
             with gr.Tab("Generate with Model"):
                 gr.Markdown(
                     """
                 <div style="text-align: center; margin: 1rem 0;">
-                    <h2 style="font-size: 1.8rem; font-weight: 600; color: #72a914;">Image Generation</h2>
+                    <h2 style="font-size: 1.8rem; font-weight: 600;
+                        color: #72a914;">Image Generation</h2>
                     <p>Generate images using your finetuned models.</p>
                 </div>
                 """
                 )
-                generation_interface = image_gen_ui.create_ui()
+                image_gen_ui.create_ui()
 
     return app
 
