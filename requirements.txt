@@ -1,2 +1,4 @@
 gradio>=5.16.0
-requests>=2.32.0
+numpy>=1.24.3
+Pillow>=10.0.0
+requests>=2.31.0
