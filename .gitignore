@@ -40,9 +40,9 @@ finetune_response.json
 *.zip
 generated_images/
 data/
+.gradio/
 
 # Logs
 *.log
 
 # Local data
-config/local_config.json 

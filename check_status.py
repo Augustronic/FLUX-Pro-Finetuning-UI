@@ -1,6 +1,8 @@
 import http.client
 import json
 
+# Refer to https://docs.bfl.ml/ for details on finetuning status parameters.
+
 # Your API key
 API_KEY = "21006105-1bcc-4969-abab-97e55051d7a3"
 FINETUNE_ID = "80a60490-54ea-48e2-b6b3-f2af58bc37f5"

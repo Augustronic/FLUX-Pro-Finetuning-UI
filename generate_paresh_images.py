@@ -3,6 +3,8 @@ import json
 import time
 from typing import Optional
 
+# Refer to https://docs.bfl.ml/ for details on finetune inference parameters.
+
 class ImageGenerator:
     def __init__(self, api_key: str, host: str = "api.us1.bfl.ai"):
         self.api_key = api_key

@@ -3,11 +3,13 @@ import json
 import time
 import requests
 
+# Refer to https://docs.bfl.ml/ for details on finetuning progress parameters.
+
 class FineTuneMonitor:
     def __init__(self, api_key: str, host: str = "api.us1.bfl.ai"):
         self.api_key = api_key
         self.host = host
-        
+   
     def check_progress(self, finetune_id: str) -> dict:
         """Check progress of a fine-tuning job."""
         conn = http.client.HTTPSConnection(self.host)

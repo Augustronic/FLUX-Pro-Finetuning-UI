@@ -39,60 +39,57 @@ class ModelBrowserUI:
     def create_ui(self) -> gr.Blocks:
         """Create the model browser interface."""
         with gr.Blocks(title="Model Browser") as interface:
-            gr.Markdown("""
-            # Model Browser
-            View and manage your trained models. Click Refresh to fetch the latest models from the API.
-            """)
             
             # Model list
-            headers = [
-                "Model Name",
-                "Fine-tune ID",
-                "Trigger Word",
+            columns = [
+                "Model name",
+                "Finetune ID",
+                "Trigger word",
                 "Type",
                 "Mode",
                 "Rank",
                 "Iterations",
-                "Learning Rate",
+                "Learning rate",
                 "Priority",
                 "Timestamp"
             ]
-            
+
             with gr.Row():
                 with gr.Column(scale=4):
                     model_table = gr.Dataframe(
-                        headers=headers,
-                        datatype=["str"] * len(headers),
+                        headers=columns,
+                        datatype=["str"] * len(columns),
                         value=self.get_models_df(),
-                        label="Trained Models",
+                        label="Click Refresh to fetch the latest models from the API.",
                         interactive=False,
-                        wrap=True
+                        wrap=False
                     )
                 
                 with gr.Column(scale=1):
+                    with gr.Group():
+                        refresh_btn = gr.Button("🔄 Refresh models")
+                        status = gr.Textbox(label="Status", interactive=False)
+
                     # Quick copy section
-                    gr.Markdown("### Quick Copy")
+                    gr.Markdown("### Quick copy")
                     selected_id = gr.Textbox(
-                        label="Selected Model ID",
+                        label="Selected model ID",
                         interactive=False
                     )
                     selected_trigger = gr.Textbox(
-                        label="Trigger Word",
+                        label="Trigger word",
                         interactive=False
                     )
             
             with gr.Row():
-                refresh_btn = gr.Button("🔄 Refresh Models", variant="primary")
-                status = gr.Textbox(label="Status", interactive=False)
-            
-            # Model details section
-            with gr.Row():
-                with gr.Column():
-                    gr.Markdown("### Model Details")
+                with gr.Column(scale=4):
+                    gr.Markdown("### Model details")
                     selected_model = gr.JSON(
-                        label="Selected Model Metadata",
+                        label="Selected model metadata",
                         value={}
                     )
+                with gr.Column(scale=1):
+                    gr.Markdown("")
             
             # Handle refresh
             refresh_outputs = [model_table, status]
@@ -103,24 +100,24 @@ class ModelBrowserUI:
             )
             
             # Update details when model is selected
-            def update_selection(evt: gr.SelectData, data: List[List[str]]) -> tuple:
+            def update_selection(evt: gr.SelectData, data) -> tuple:
                 try:
-                    row = data[evt.index[0]]  # Get the selected row
+                    row = data.iloc[evt.index[0]].tolist()  # Get the selected row using iloc for pandas DataFrame
                     model_info = {
-                        "Model Name": row[0],
-                        "Fine-tune ID": row[1],
-                        "Trigger Word": row[2],
+                        "Model name": row[0],
+                        "Finetune ID": row[1],
+                        "Trigger word": row[2],
                         "Type": row[3],
                         "Mode": row[4],
                         "Rank": row[5],
                         "Iterations": row[6],
-                        "Learning Rate": row[7],
+                        "Learning rate": row[7],
                         "Priority": row[8],
                         "Timestamp": row[9]
                     }
                     return (
                         json.dumps(model_info, indent=2),
-                        row[1],  # Fine-tune ID
+                        row[1],  # Finetune ID
                         row[2]   # Trigger word
                     )
                 except Exception as e:
@@ -137,4 +134,4 @@ class ModelBrowserUI:
                 outputs=[selected_model, selected_id, selected_trigger]
             )
             
-        return interface 
+        return interface
