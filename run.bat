@@ -1,0 +1,6 @@
+@echo off
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
+
+echo Starting FLUX Pro Finetuning UI...
+python app.py
