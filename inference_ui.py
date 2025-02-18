@@ -303,7 +303,7 @@ class ImageGenerationUI:
                             num_steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
-                                value=42,
+                                value=40,
                                 step=1,
                                 label="Number of steps",
                                 info="More steps = higher quality but slower",
@@ -312,7 +312,7 @@ class ImageGenerationUI:
                             guidance_scale = gr.Slider(
                                 minimum=1.5,
                                 maximum=5.0,
-                                value=3.5,
+                                value=2.5,
                                 step=0.1,
                                 label="Guidance scale",
                                 info="How closely to follow the prompt",
@@ -343,7 +343,7 @@ class ImageGenerationUI:
                         safety_tolerance = gr.Slider(
                             minimum=0,
                             maximum=6,
-                            value=3,
+                            value=2,
                             step=1,
                             label="Safety tolerance",
                             info="0 (most strict) to 6 (least strict).",
@@ -351,7 +351,7 @@ class ImageGenerationUI:
 
                         output_format = gr.Radio(
                             choices=["jpeg", "png"],
-                            value="png",
+                            value="jpeg",
                             label="Output format",
                             info="Select the image format.",
                         )

@@ -1,6 +1,6 @@
 import gradio as gr
 from finetune_ui import FineTuneUI
-from image_generation_ui import ImageGenerationUI
+from inference_ui import ImageGenerationUI
 from model_browser_ui import ModelBrowserUI
 from model_manager import ModelManager
 from config_manager import ConfigManager
@@ -25,7 +25,6 @@ def create_app():
         <div style="text-align: center; margin: 0 auto; padding: 0 2rem;">
             <h1 style="font-size: 2.5rem; font-weight: 600; margin: 1rem 0; color: #72a914;">FLUX Pro Finetuning UI</h1>
             <p style="font-size: 1.2rem; margin-bottom: 2rem;">Train custom models, browse your collection and generate images.</p>
-            <p style="text-align: right; font-size: 0.8em; color: #666;">Developed by Paresh Ranaut</p>
         </div>
         """
         )

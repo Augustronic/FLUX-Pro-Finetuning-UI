@@ -5,6 +5,7 @@ import requests
 from typing import Optional
 from pathlib import Path
 
+
 # Refer to https://docs.bfl.ml/ for details on request finetuning parameters.
 
 class FineTuneClient:
@@ -23,9 +24,9 @@ class FineTuneClient:
         file_path: str,
         model_name: str,
         trigger_word: str,
-        mode: str = 'character',
-        finetune_type: str = 'lora',
-        iterations: int = 1000,
+        mode: str = 'general',
+        finetune_type: str = 'full',
+        iterations: int = 300,
         lora_rank: Optional[int] = None,
         learning_rate: Optional[float] = None,
         priority: str = 'quality',
@@ -156,13 +157,13 @@ if __name__ == "__main__":
     # Example fine-tuning job
     try:
         result = client.start_finetune(
-            file_path="paresh.zip",
-            model_name="pareshranaut-character-lora-16",
-            trigger_word="pareshranaut",
-            mode="character",
-            finetune_type="lora",
-            iterations=1000,
-            lora_rank=16,
+            file_path="aixsponza.zip",
+            model_name="aixsponza-general-full-32",
+            trigger_word="aixsponza",
+            mode="general",
+            finetune_type="full",
+            iterations=300,
+            lora_rank=32,
             priority="quality",
             auto_caption=True
         )

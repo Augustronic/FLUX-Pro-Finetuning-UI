@@ -19,9 +19,9 @@ class ImageGenerator:
         negative_prompt: Optional[str] = None,
         num_images: int = 1,
         width: int = 1024,
-        height: int = 1024,
-        num_inference_steps: int = 30,
-        guidance_scale: float = 7.5,
+        height: int = 768,
+        num_inference_steps: int = 40,
+        guidance_scale: float = 2.5,
         scheduler: str = "DPM++ 2M Karras"
     ) -> dict:
         """Request image generation using the fine-tuned model."""
