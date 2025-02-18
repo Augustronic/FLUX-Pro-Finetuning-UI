@@ -40,7 +40,6 @@ finetune_response.json
 *.zip
 generated_images/
 data/
-.gradio/
 
 # Logs
 *.log
