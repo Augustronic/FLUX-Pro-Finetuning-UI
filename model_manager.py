@@ -45,10 +45,25 @@ class ModelManager:
             if self.models_file.exists():
                 with open(self.models_file, 'r') as f:
                     data = json.load(f)
+                    print(
+                        f"Loading {len(data)} models from {self.models_file}"
+                    )
                     for item in data:
-                        self.models[item['finetune_id']] = ModelMetadata(
-                            **item)
-                print(f"Loaded {len(self.models)} models from storage")
+                        try:
+                            required_keys = [
+                                'finetune_id', 'model_name', 'trigger_word',
+                                'mode', 'type'
+                            ]
+                            if not all(k in item for k in required_keys):
+                                print(f"Skipping invalid model data: {item}")
+                                continue
+                            model = ModelMetadata(**item)
+                            self.models[item['finetune_id']] = model
+                        except Exception as e:
+                            print(f"Error loading model: {e}")
+                            continue
+                for model in self.models.values():
+                    print(f"- {model.model_name} ({model.trigger_word})")
         except Exception as e:
             print(f"Error loading models: {e}")
             self.models = {}
@@ -77,7 +92,11 @@ class ModelManager:
 
     def list_models(self) -> List[ModelMetadata]:
         """List all models."""
-        return list(self.models.values())
+        models = list(self.models.values())
+        print(f"Listing {len(models)} models:")
+        for model in models:
+            print(f"- {model.model_name} ({model.trigger_word})")
+        return models
 
     def get_model_details(self, finetune_id: str) -> Optional[dict]:
         """Get model details from API."""
@@ -101,6 +120,7 @@ class ModelManager:
         """Update model details from API."""
         details = self.get_model_details(finetune_id)
         if not details:
+            print(f"No details found for model {finetune_id}")
             return False
 
         try:
@@ -116,6 +136,7 @@ class ModelManager:
                 learning_rate=details.get('learning_rate'),
                 priority=details.get('priority')
             )
+            print(f"Updating model {finetune_id}: {metadata.model_name}")
             self.add_model(metadata)
             return True
         except Exception as e:
@@ -125,6 +146,7 @@ class ModelManager:
     def refresh_models(self):
         """Refresh all models from API."""
         try:
+            print("\nRefreshing models from API...")
             # Get list of models from API
             url = f"https://{self.host}/v1/my_finetunes"
             headers = {"X-Key": self.api_key}
@@ -134,9 +156,11 @@ class ModelManager:
 
             data = response.json()
             if not data or 'finetunes' not in data:
+                print("No models found in API response")
                 return
 
             # Update each model's details
+            print(f"Found {len(data['finetunes'])} models in API")
             for finetune_id in data['finetunes']:
                 self.update_model_from_api(finetune_id)
 

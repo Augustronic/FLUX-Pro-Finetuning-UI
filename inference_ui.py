@@ -1,24 +1,30 @@
 import gradio as gr
 import time
-from model_manager import ModelManager
-from typing import Tuple, Union
+from typing import Dict, Any, Optional, Tuple
 import base64
 import requests
+import json
 from pathlib import Path
+import tempfile
+
+from model_manager import ModelManager
 
 
 class ImageGenerationUI:
-    # Constants for endpoints
+    """Handles the Gradio UI for image generation with fine-tuned models."""
+
+    # API endpoints
     ENDPOINT_ULTRA = "flux-pro-1.1-ultra-finetuned"
     ENDPOINT_STANDARD = "flux-pro-finetuned"
 
-    def __init__(self, model_manager: ModelManager):
+    def __init__(self, model_manager: ModelManager) -> None:
+        """Initialize the UI with a model manager."""
         self.manager = model_manager
-        # Create images directory if it doesn't exist
-        self.images_dir = Path("generated_images")
-        self.images_dir.mkdir(exist_ok=True)
+        # Use system temp directory for generated images
+        self.images_dir = Path(tempfile.gettempdir()) / "generated_images"
+        self.images_dir.mkdir(mode=0o777, parents=True, exist_ok=True)
 
-    def _format_model_choice(self, model) -> str:
+    def _format_model_choice(self, model: Any) -> str:
         """Format model metadata for dropdown display."""
         parts = [
             f"{model.model_name}",
@@ -40,22 +46,18 @@ class ImageGenerationUI:
     def _save_image_from_url(self, image_url: str, output_format: str) -> str:
         """Save image from URL or base64 data to a file."""
         try:
-            # Check if the URL is a data URL (base64)
             if image_url.startswith("data:"):
-                # Extract the base64 data
                 header, encoded = image_url.split(",", 1)
                 image_data = base64.b64decode(encoded)
             else:
-                # Download from regular URL
                 response = requests.get(image_url)
+                response.raise_for_status()
                 image_data = response.content
 
-            # Generate unique filename
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             filename = f"generated_image_{timestamp}.{output_format}"
             filepath = self.images_dir / filename
 
-            # Save the image
             with open(filepath, "wb") as f:
                 f.write(image_data)
 
@@ -71,21 +73,42 @@ class ImageGenerationUI:
         prompt: str,
         negative_prompt: str,
         aspect_ratio: str,
-        num_steps: Union[int, None],
-        guidance_scale: Union[float, None],
+        steps: Optional[int],
+        guidance: Optional[float],
         strength: float,
-        seed: Union[int, None],
+        seed: Optional[int],
         output_format: str = "jpeg",
         prompt_upsampling: bool = False,
         safety_tolerance: int = 2,
-        image_prompt: Union[str, None] = None,
-        image_prompt_strength: float = 0.1,
-        width: Union[int, None] = None,
-        height: Union[int, None] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
         raw_mode: bool = False,
     ) -> Tuple[str, str]:
-        """Generate image using selected model and parameters."""
+        """
+        Generate an image using the selected model and parameters.
+
+        Args:
+            endpoint: API endpoint to use
+            model_choice: Selected model from dropdown
+            prompt: Text prompt for generation
+            negative_prompt: Things to avoid in generation
+            aspect_ratio: Image aspect ratio (ultra endpoint)
+            steps: Number of generation steps
+            guidance: Guidance scale for generation
+            strength: Model strength (0.1-2.0)
+            seed: Random seed for reproducibility
+            output_format: Output image format
+            prompt_upsampling: Whether to enhance prompt
+            safety_tolerance: Safety check level (0-6)
+            width: Image width (standard endpoint)
+            height: Image height (standard endpoint)
+            raw_mode: Whether to use raw mode
+
+        Returns:
+            Tuple of (image path, status message)
+        """
         try:
+            # Validate inputs
             if not model_choice:
                 return ("", "Error: Please select a model")
             if not prompt or not prompt.strip():
@@ -99,56 +122,56 @@ class ImageGenerationUI:
             if not model:
                 return ("", "Error: Model not found")
 
+            # Log generation details
             print(f"\nGenerating image with model: {model.model_name}")
             print(f"Model ID: {model_id}")
             print(f"Endpoint: {endpoint}")
             print(f"Prompt: {prompt}")
-            print(f"Raw mode: {raw_mode}")
 
             # Common parameters
-            params = {
+            params: Dict[str, Any] = {
                 "finetune_id": model_id,
-                "prompt": prompt,
-                "output_format": output_format,
+                "prompt": prompt.strip(),
+                "output_format": output_format.lower(),
+                "num_images": 1,
                 "finetune_strength": strength,
                 "safety_tolerance": safety_tolerance,
+                "seed": seed if seed is not None else 0
             }
 
+            # Add endpoint-specific parameters
             if endpoint == self.ENDPOINT_ULTRA:
-                # Ultra endpoint uses aspect_ratio parameter directly
-                params.update(
-                    {
-                        "aspect_ratio": aspect_ratio,
-                        "seed": seed if seed is not None else 0,
-                        "image_prompt": image_prompt if image_prompt else "",
-                        "image_prompt_strength": (
-                            image_prompt_strength if image_prompt else 0.1
-                        ),
-                    }
-                )
+                params.update({
+                    "aspect_ratio": aspect_ratio,
+                    "guidance_scale": guidance or 2.5
+                })
             else:  # ENDPOINT_STANDARD
-                # Standard endpoint uses width/height and supports raw mode
-                params.update(
-                    {
-                        "steps": num_steps if num_steps is not None else 40,
-                        # Default guidance scale is 2.5
-                        "guidance": float(guidance_scale or 2.5),
-                        "width": width if width is not None else 1024,
-                        "height": height if height is not None else 768,
-                        "prompt_upsampling": prompt_upsampling,
-                        "seed": seed if seed is not None else 0,
-                        # Empty string for standard endpoint
-                        "image_prompt": "",
-                        "raw": raw_mode,
-                    }
-                )
+                # Ensure parameters are within valid ranges
+                steps_value = min(max(steps or 40, 1), 50)
+                guidance_value = min(max(guidance or 2.5, 1.5), 5.0)
+                width_value = (width or 1024) // 32 * 32
+                height_value = (height or 768) // 32 * 32
 
-            # Remove None values from params
+                params.update({
+                    "steps": steps_value,
+                    "guidance": float(guidance_value),
+                    "width": width_value,
+                    "height": height_value,
+                    "raw": raw_mode,
+                    "prompt_upsampling": prompt_upsampling
+                })
+
+            if negative_prompt:
+                params["negative_prompt"] = negative_prompt
+
+            # Remove None values
             params = {k: v for k, v in params.items() if v is not None}
+
+            print("Sending request to", endpoint)
+            print("Parameters:", json.dumps(params, indent=2))
 
             # Start generation
             result = self.manager.generate_image(endpoint=endpoint, **params)
-
             if not result:
                 return ("", "Error: No response from generation API")
 
@@ -158,8 +181,10 @@ class ImageGenerationUI:
 
             print(f"Inference ID: {inference_id}")
 
+            # Monitor generation progress
             max_attempts = 30
             attempt = 0
+            check_interval = 2
 
             while attempt < max_attempts:
                 status = self.manager.get_generation_status(inference_id)
@@ -174,23 +199,25 @@ class ImageGenerationUI:
                     image_url = status.get("result", {}).get("sample")
                     if not image_url:
                         return ("", "Error: No image URL in completed status")
-                    print(f"Generation completed: {image_url}")
 
+                    print(f"Generation completed: {image_url[:70]}...")
                     local_path = self._save_image_from_url(
                         image_url, output_format
                     )
                     if not local_path:
                         return ("", "Error: Failed to save image")
 
-                    msg = "Generation completed successfully!"
-                    msg += f" Image saved as {output_format.upper()}"
-                    return (local_path, msg)
+                    return (
+                        local_path,
+                        f"Generation completed successfully! "
+                        f"Image saved as {output_format.upper()}"
+                    )
 
                 print(
                     f"Status: {state} "
                     f"(Attempt {attempt + 1}/{max_attempts})"
                 )
-                time.sleep(2)
+                time.sleep(check_interval)
                 attempt += 1
 
             return ("", "Error: Generation timed out")
@@ -204,8 +231,8 @@ class ImageGenerationUI:
         with gr.Blocks(title="AI Image Generation") as interface:
             gr.Markdown(
                 """
-            **Important**: Include the model's trigger word in your prompt!
-            """
+                **Important**: Include the model's trigger word in your prompt!
+                """
             )
 
             with gr.Row():
@@ -223,17 +250,30 @@ class ImageGenerationUI:
                         info="Select the generation endpoint to use.",
                     )
 
-                    # Model selection and basic parameters
-                    model_choices = [
-                        self._format_model_choice(model)
-                        for model in self.manager.list_models()
-                    ]
+                    # Model selection
+                    models = self.manager.list_models()
+                    if not models:
+                        print("No models found, refreshing from API...")
+                        self.manager.refresh_models()
+                        models = self.manager.list_models()
+
+                    # Create model choices list
+                    model_choices = []
+                    for model in models:
+                        if model and model.model_name and model.trigger_word:
+                            choice = self._format_model_choice(model)
+                            model_choices.append(choice)
+                            print(f"Added model choice: {choice}")
 
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
+                            value=model_choices[0] if model_choices else None,
                             label="Select model",
-                            info="Model trigger word in parentheses.",
+                            info=(
+                                "Model trigger word shown in parentheses. "
+                                "Include in prompt."
+                            ),
                         )
                         refresh_btn = gr.Button("🔄 Refresh models")
 
@@ -253,11 +293,10 @@ class ImageGenerationUI:
                     )
 
                 with gr.Column():
-                    # Advanced parameters
                     with gr.Group():
                         gr.Markdown("### Image parameters")
 
-                        # Parameters for Ultra endpoint
+                        # Ultra endpoint parameters
                         with gr.Column(visible=True) as ultra_params:
                             aspect_ratio = gr.Radio(
                                 choices=[
@@ -272,16 +311,16 @@ class ImageGenerationUI:
                             strength = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
-                                value=1.2,
+                                value=1.1,
                                 step=0.1,
                                 label="Model strength",
                                 info=(
                                     "How strongly to apply model's style "
-                                    "(default: 1.2)."
+                                    "(default: 1.1)."
                                 ),
                             )
 
-                        # Parameters for Standard endpoint
+                        # Standard endpoint parameters
                         with gr.Column(visible=False) as standard_params:
                             with gr.Row():
                                 width = gr.Slider(
@@ -301,31 +340,39 @@ class ImageGenerationUI:
                                     info="Must be a multiple of 32",
                                 )
 
-                            num_steps = gr.Slider(
+                            steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
                                 value=40,
                                 step=1,
                                 label="Steps",
-                                info="Quality vs speed",
+                                info=(
+                                    "Number of generation steps "
+                                    "(quality vs speed)"
+                                ),
                             )
 
-                            guidance_scale = gr.Slider(
+                            guidance = gr.Slider(
                                 minimum=1.5,
                                 maximum=5.0,
                                 value=2.5,
                                 step=0.1,
-                                label="CFG",
-                                info="Prompt adherence strength",
+                                label="Guidance scale",
+                                info="Controls prompt adherence strength",
                             )
 
                             prompt_upsampling = gr.Checkbox(
-                                label="Enhance",
-                                info="AI"
+                                label="Enhance prompt",
+                                info="Use AI to enhance the prompt",
                             )
 
                             raw_mode = gr.Checkbox(
-                                label="Raw mode", value=False, info="Raw mode"
+                                label="Raw mode",
+                                value=False,
+                                info=(
+                                    "Generate less processed, "
+                                    "more natural images"
+                                ),
                             )
 
                         # Common parameters
@@ -375,13 +422,17 @@ class ImageGenerationUI:
                         show_download_button=True,
                     )
 
-            # Handle model refresh
+            # Event handlers
             def refresh_models():
                 self.manager.refresh_models()
-                return [
-                    self._format_model_choice(m)
-                    for m in self.manager.list_models()
-                ]
+                models = self.manager.list_models()
+                choices = []
+                for model in models:
+                    if model and model.model_name and model.trigger_word:
+                        choice = self._format_model_choice(model)
+                        choices.append(choice)
+                        print(f"Refreshed model choice: {choice}")
+                return choices
 
             refresh_btn.click(
                 fn=refresh_models,
@@ -389,7 +440,6 @@ class ImageGenerationUI:
                 outputs=[model_dropdown]
             )
 
-            # Handle endpoint visibility
             def toggle_endpoint_params(choice):
                 is_ultra = choice == self.ENDPOINT_ULTRA
                 is_standard = choice == self.ENDPOINT_STANDARD
@@ -404,13 +454,11 @@ class ImageGenerationUI:
                 outputs=[ultra_params, standard_params]
             )
 
-            # Handle generation
+            # Generation inputs
             generate_inputs = [
                 endpoint, model_dropdown, prompt, negative_prompt,
-                aspect_ratio, num_steps, guidance_scale, strength,
+                aspect_ratio, steps, guidance, strength,
                 seed, output_format, prompt_upsampling, safety_tolerance,
-                gr.Textbox(visible=False, value=""),  # image_prompt
-                gr.Number(visible=False, value=0.1),  # image_prompt_strength
                 width, height, raw_mode,
             ]
 
