@@ -1,37 +1,41 @@
-# Python
+# Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 *.egg-info/
-.installed.cfg
 *.egg
+.installed.cfg
 
 # Virtual Environment
 venv/
 ENV/
 .env
 
-# IDE
+# IDE - JetBrains
 .idea/
+
+# IDE - VS Code
 .vscode/
+
+# Temporary files created by text editors
 *.swp
 *.swo
 
-# Project specific
+# Distribution / packaging
+build/
+dist/
+develop-eggs/
+sdist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+var/
+
+# Project-specific ignores
 config.json
 model_metadata.json
 model_finetuned_ids.txt
@@ -41,9 +45,9 @@ finetune_response.json
 generated_images/
 data/
 
-# Logs
+# Log files
 *.log
 
-# Local data
-watch_and_run.bat
+# Local data / configuration
 .clinerules
+docs/
