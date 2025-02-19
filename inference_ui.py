@@ -213,8 +213,10 @@ class ImageGenerationUI:
                     # Endpoint selection
                     endpoint = gr.Radio(
                         choices=[
-                            ("FLUX Pro 1.1 Ultra", self.ENDPOINT_ULTRA),
-                            ("FLUX Pro Standard", self.ENDPOINT_STANDARD),
+                            ("FLUX 1.1 [pro] ultra Finetune",
+                             self.ENDPOINT_ULTRA),
+                            ("FLUX.1 [pro] Finetune",
+                             self.ENDPOINT_STANDARD),
                         ],
                         value=self.ENDPOINT_ULTRA,
                         label="Generation endpoint",
@@ -262,7 +264,7 @@ class ImageGenerationUI:
                                     "21:9", "16:9", "3:2", "4:3", "1:1",
                                     "3:4", "2:3", "9:16", "9:21",
                                 ],
-                                value="1:1",
+                                value="16:9",
                                 label="Aspect ratio",
                                 info="Select image dimensions ratio.",
                             )
@@ -359,7 +361,7 @@ class ImageGenerationUI:
             with gr.Row():
                 with gr.Column():
                     generate_btn = gr.Button(
-                        "Generate image", variant="primary"
+                        "✨ Generate image", variant="primary"
                     )
                     status_text = gr.Textbox(
                         label="Status", interactive=False
@@ -376,12 +378,10 @@ class ImageGenerationUI:
             # Handle model refresh
             def refresh_models():
                 self.manager.refresh_models()
-                return {
-                    "choices": [
-                        self._format_model_choice(m)
-                        for m in self.manager.list_models()
-                    ]
-                }
+                return [
+                    self._format_model_choice(m)
+                    for m in self.manager.list_models()
+                ]
 
             refresh_btn.click(
                 fn=refresh_models,
@@ -391,10 +391,12 @@ class ImageGenerationUI:
 
             # Handle endpoint visibility
             def toggle_endpoint_params(choice):
-                return (
-                    {"visible": choice == self.ENDPOINT_ULTRA},
-                    {"visible": choice == self.ENDPOINT_STANDARD}
-                )
+                is_ultra = choice == self.ENDPOINT_ULTRA
+                is_standard = choice == self.ENDPOINT_STANDARD
+                return [
+                    gr.update(visible=is_ultra),
+                    gr.update(visible=is_standard)
+                ]
 
             endpoint.change(
                 fn=toggle_endpoint_params,
@@ -418,4 +420,4 @@ class ImageGenerationUI:
                 outputs=[output_image, status_text],
             )
 
-        return interface
+            return interface

@@ -45,3 +45,5 @@ data/
 *.log
 
 # Local data
+watch_and_run.bat
+.clinerules

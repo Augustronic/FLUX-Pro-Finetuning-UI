@@ -55,6 +55,10 @@ class FineTuneUI:
             return "Please enter a finetune ID."
 
         try:
+            # Extract the last part of the finetune ID (after the last hyphen)
+            if '-' in finetune_id:
+                finetune_id = finetune_id.split('-')[-1]
+
             # Get status details
             result = self.monitor.check_progress(finetune_id)
             if not result:
@@ -361,6 +365,12 @@ areas. No subject improvements.</p>""")
 Higher values: faster training, may reduce quality.</p>
 <p style="color: #72a914;">LoRA: use 10x larger values than Full.</p>""")
 
+            # Start finetuning button
+            start_btn = gr.Button(
+                "▶️ Start Finetuning",
+                variant="primary"
+                )
+
             # Status checking section
             with gr.Row():
                 with gr.Column():
@@ -372,16 +382,12 @@ Higher values: faster training, may reduce quality.</p>
                         )
                     )
                     check_status_btn = gr.Button(
-                        "Check status",
-                        variant="primary"
+                        "〽️ Check status"
                     )
                     status_text = gr.Textbox(
                         label="Status",
                         interactive=False
                     )
-
-            # Start finetuning button
-            start_btn = gr.Button("Start Finetuning")
 
             # Handle finetuning start
             start_btn.click(

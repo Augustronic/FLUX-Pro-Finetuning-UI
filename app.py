@@ -15,25 +15,26 @@ def create_app():
     model_manager = ModelManager(api_key=config.get_api_key())
 
     finetune_ui = FineTuneUI()
-    image_gen_ui = ImageGenerationUI(model_manager)
+    inference_ui = ImageGenerationUI(model_manager)
     model_browser_ui = ModelBrowserUI(model_manager)
 
     # Create the combined interface
-    with gr.Blocks(title="FLUX Pro Finetuning UI") as app:
-        gr.Markdown(
+    with gr.Blocks(title="FLUX [pro] Finetuning UI") as demo:
+        with gr.Accordion(""):
+            gr.Markdown(
+                """
+            <div style="text-align: center; margin: 0 auto; padding: 0 2rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 600; margin: 1rem 0;
+                    color: #72a914;">
+                    FLUX [pro] Finetuning UI
+                </h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+                    Train custom models, browse your collection and generate
+                    images.
+                </p>
+            </div>
             """
-        <div style="text-align: center; margin: 0 auto; padding: 0 2rem;">
-            <h1 style="font-size: 2.5rem; font-weight: 600; margin: 1rem 0;
-                color: #72a914;">
-                FLUX Pro Finetuning UI
-            </h1>
-            <p style="font-size: 1.2rem; margin-bottom: 2rem;">
-                Train custom models, browse your collection and generate
-                images.
-            </p>
-        </div>
-        """
-        )
+            )
 
         with gr.Tabs():
             with gr.Tab("Finetune Model"):
@@ -71,11 +72,12 @@ def create_app():
                 </div>
                 """
                 )
-                image_gen_ui.create_ui()
+                inference_ui.create_ui()
 
-    return app
+    return demo
 
+
+demo = create_app()
 
 if __name__ == "__main__":
-    app = create_app()
-    app.launch(share=False)
+    demo.launch(share=False)

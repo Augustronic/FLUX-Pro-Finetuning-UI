@@ -59,15 +59,14 @@ class ModelBrowserUI:
                         headers=columns,
                         datatype="str",
                         value=self.get_models_df(),
-                        label="Click Refresh to fetch the latest models.",
+                        label="Click Refresh to fetch the latest models. ➡️",
                         interactive=False,
                         wrap=False
                     )
 
                 with gr.Column(scale=1):
-                    with gr.Group():
-                        refresh_btn = gr.Button("🔄 Refresh models")
-                        status = gr.Textbox(label="Status", interactive=False)
+                    refresh_btn = gr.Button("🔄 Refresh models")
+                    status = gr.Textbox(label="Status", interactive=False)
 
                     # Quick copy section
                     gr.Markdown("### Quick copy")
