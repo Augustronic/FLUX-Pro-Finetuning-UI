@@ -1,5 +1,7 @@
 import gradio as gr
 import time
+import os
+import re
 from typing import Dict, Any, Optional, Tuple
 import base64
 import requests
@@ -19,52 +21,217 @@ class ImageGenerationUI:
 
     def __init__(self, model_manager: ModelManager) -> None:
         """Initialize the UI with a model manager."""
+        if not isinstance(model_manager, ModelManager):
+            raise ValueError("Invalid model manager instance")
+            
         self.manager = model_manager
-        # Use system temp directory for generated images
+        
+        # Use system temp directory for generated images with secure permissions
         self.images_dir = Path(tempfile.gettempdir()) / "generated_images"
-        self.images_dir.mkdir(mode=0o777, parents=True, exist_ok=True)
+        if not self.images_dir.exists():
+            self.images_dir.mkdir(mode=0o700, parents=True)  # Only owner can read/write
+        else:
+            # Update permissions if directory exists
+            os.chmod(self.images_dir, 0o700)
 
     def _format_model_choice(self, model: Any) -> str:
-        """Format model metadata for dropdown display."""
+        """Format model metadata for dropdown display.
+        
+        Args:
+            model: Model metadata object
+            
+        Returns:
+            Formatted string for display
+            
+        Raises:
+            ValueError: If model data is invalid
+        """
+        if not model or not hasattr(model, 'model_name') or not hasattr(model, 'trigger_word'):
+            raise ValueError("Invalid model data")
+            
+        # Validate required attributes
+        if not all([
+            isinstance(getattr(model, attr, None), str)
+            for attr in ['model_name', 'trigger_word', 'type', 'mode']
+        ]):
+            raise ValueError("Invalid model attributes")
+            
+        # Sanitize display values
         parts = [
-            f"{model.model_name}",
-            f"({model.trigger_word})",
-            f"{model.type.upper()}",
-            f"{model.mode.capitalize()}",
+            f"{self._sanitize_display_text(model.model_name)}",
+            f"({self._sanitize_display_text(model.trigger_word)})",
+            f"{self._sanitize_display_text(model.type).upper()}",
+            f"{self._sanitize_display_text(model.mode).capitalize()}",
         ]
-        if model.rank:
-            parts.append(f"Rank {model.rank}")
+        
+        # Add rank if present
+        if hasattr(model, 'rank') and isinstance(model.rank, (int, float)):
+            parts.append(f"Rank {int(model.rank)}")
+            
         return " - ".join(parts)
 
+    def _sanitize_display_text(self, text: str) -> str:
+        """Sanitize text for display in UI.
+        
+        Args:
+            text: Text to sanitize
+            
+        Returns:
+            Sanitized text
+        """
+        if not isinstance(text, str):
+            return ""
+            
+        # Remove control characters and limit length
+        text = "".join(char for char in text if char.isprintable())
+        text = text[:100]  # Limit length
+        
+        # Only allow alphanumeric and basic punctuation
+        text = re.sub(r'[^\w\s\-_.,()]', '', text)
+        return text.strip()
+
     def _get_model_id_from_choice(self, choice: str) -> str:
-        """Extract model ID from formatted choice string."""
-        for model in self.manager.list_models():
-            if self._format_model_choice(model) == choice:
-                return model.finetune_id
-        return ""
+        """Extract model ID from formatted choice string.
+        
+        Args:
+            choice: Formatted choice string from dropdown
+            
+        Returns:
+            Model ID or empty string if not found
+        """
+        if not isinstance(choice, str) or not choice.strip():
+            return ""
+            
+        try:
+            for model in self.manager.list_models():
+                if model and self._format_model_choice(model) == choice:
+                    # Validate ID format
+                    if re.match(r'^[a-zA-Z0-9-]+$', model.finetune_id):
+                        return model.finetune_id
+            return ""
+        except Exception as e:
+            print(f"Error extracting model ID: {e}")
+            return ""
+
+    def _validate_image_url(self, url: str) -> bool:
+        """Validate image URL format and security."""
+        if url.startswith("data:"):
+            # Validate base64 data URL format
+            try:
+                header, encoded = url.split(",", 1)
+                if not header.startswith("data:image/"):
+                    return False
+                base64.b64decode(encoded)  # Test if valid base64
+                return True
+            except Exception:
+                return False
+        else:
+            # Validate HTTP(S) URL
+            return bool(re.match(r'^https?://[\w\-.]+(:\d+)?(/[\w\-./]*)?$', url))
 
     def _save_image_from_url(self, image_url: str, output_format: str) -> str:
-        """Save image from URL or base64 data to a file."""
+        """Save image from URL or base64 data to a file with secure handling."""
+        if not isinstance(output_format, str) or output_format.lower() not in ["jpeg", "png"]:
+            print("Invalid output format")
+            return ""
+            
+        if not self._validate_image_url(image_url):
+            print("Invalid image URL format")
+            return ""
+
         try:
-            if image_url.startswith("data:"):
-                header, encoded = image_url.split(",", 1)
-                image_data = base64.b64decode(encoded)
-            else:
-                response = requests.get(image_url)
-                response.raise_for_status()
-                image_data = response.content
+            # Create a temporary file first
+            temp_file = Path(tempfile.mktemp(dir=self.images_dir))
+            
+            try:
+                if image_url.startswith("data:"):
+                    header, encoded = image_url.split(",", 1)
+                    image_data = base64.b64decode(encoded)
+                else:
+                    # Use timeout and size limit for URL downloads
+                    response = requests.get(
+                        image_url,
+                        timeout=30,
+                        stream=True,
+                        headers={"User-Agent": "FLUX-Pro-Finetuning-UI"}
+                    )
+                    response.raise_for_status()
+                    
+                    # Check content type
+                    content_type = response.headers.get("content-type", "")
+                    if not content_type.startswith("image/"):
+                        raise ValueError("Invalid content type")
+                    
+                    # Read with size limit (50MB)
+                    max_size = 50 * 1024 * 1024
+                    content = b""
+                    for chunk in response.iter_content(chunk_size=8192):
+                        content += chunk
+                        if len(content) > max_size:
+                            raise ValueError("Image too large")
+                    image_data = content
 
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            filename = f"generated_image_{timestamp}.{output_format}"
-            filepath = self.images_dir / filename
+                # Write to temporary file
+                with open(temp_file, "wb") as f:
+                    f.write(image_data)
 
-            with open(filepath, "wb") as f:
-                f.write(image_data)
+                # Set secure permissions
+                os.chmod(temp_file, 0o600)
 
-            return str(filepath)
+                # Create final filename
+                timestamp = time.strftime("%Y%m%d-%H%M%S")
+                filename = f"generated_image_{timestamp}.{output_format.lower()}"
+                final_path = self.images_dir / filename
+
+                # Atomic rename
+                temp_file.replace(final_path)
+                return str(final_path)
+
+            finally:
+                # Cleanup temp file if it still exists
+                if temp_file.exists():
+                    temp_file.unlink()
+
         except Exception as e:
             print(f"Error saving image: {e}")
             return ""
+
+    def _validate_prompt(self, prompt: str) -> bool:
+        """Validate prompt text for safety and format."""
+        if not prompt or not isinstance(prompt, str):
+            return False
+        
+        # Remove excessive whitespace
+        prompt = prompt.strip()
+        if len(prompt) == 0:
+            return False
+            
+        # Check for valid characters
+        if not re.match(r'^[\w\s\-_.,!?()[\]{}@#$%^&*+=<>:/\\|\'\"]+$', prompt):
+            return False
+            
+        # Check length
+        if len(prompt) > 1000:  # Maximum prompt length
+            return False
+            
+        return True
+        
+    def _validate_numeric_param(
+        self,
+        value: Optional[float],
+        min_val: float,
+        max_val: float,
+        allow_none: bool = True
+    ) -> bool:
+        """Validate numeric parameter within range."""
+        if value is None:
+            return allow_none
+            
+        try:
+            value = float(value)
+            return min_val <= value <= max_val
+        except (TypeError, ValueError):
+            return False
 
     def generate_image(
         self,
@@ -106,14 +273,19 @@ class ImageGenerationUI:
 
         Returns:
             Tuple of (image path, status message)
+            
+        Raises:
+            ValueError: If any input parameters are invalid
         """
         try:
-            # Validate inputs
+            # Validate endpoint
+            if not endpoint or endpoint not in [self.ENDPOINT_ULTRA, self.ENDPOINT_STANDARD]:
+                return ("", "Error: Invalid endpoint selection")
+
+            # Validate model selection
             if not model_choice:
                 return ("", "Error: Please select a model")
-            if not prompt or not prompt.strip():
-                return ("", "Error: Please enter a prompt")
-
+                
             model_id = self._get_model_id_from_choice(model_choice)
             if not model_id:
                 return ("", "Error: Invalid model selection")
@@ -121,6 +293,44 @@ class ImageGenerationUI:
             model = self.manager.get_model(model_id)
             if not model:
                 return ("", "Error: Model not found")
+                
+            # Validate prompt
+            if not self._validate_prompt(prompt):
+                return ("", "Error: Invalid prompt format or content")
+                
+            # Validate negative prompt if provided
+            if negative_prompt and not self._validate_prompt(negative_prompt):
+                return ("", "Error: Invalid negative prompt format")
+                
+            # Validate numeric parameters
+            if not self._validate_numeric_param(strength, 0.1, 2.0, False):
+                return ("", "Error: Invalid strength value (must be between 0.1 and 2.0)")
+                
+            if not self._validate_numeric_param(guidance, 1.5, 5.0):
+                return ("", "Error: Invalid guidance value (must be between 1.5 and 5.0)")
+                
+            if steps is not None and not self._validate_numeric_param(float(steps), 1, 50, False):
+                return ("", "Error: Invalid steps value (must be between 1 and 50)")
+                
+            if safety_tolerance not in range(7):  # 0 to 6
+                return ("", "Error: Invalid safety tolerance value")
+                
+            # Validate output format
+            if output_format not in ["jpeg", "png"]:
+                return ("", "Error: Invalid output format")
+                
+            # Validate aspect ratio for ultra endpoint
+            if endpoint == self.ENDPOINT_ULTRA:
+                valid_ratios = ["21:9", "16:9", "3:2", "4:3", "1:1", "3:4", "2:3", "9:16", "9:21"]
+                if aspect_ratio not in valid_ratios:
+                    return ("", "Error: Invalid aspect ratio")
+                    
+            # Validate dimensions for standard endpoint
+            if endpoint == self.ENDPOINT_STANDARD:
+                if width is not None and not self._validate_numeric_param(float(width), 256, 1440, False):
+                    return ("", "Error: Invalid width value")
+                if height is not None and not self._validate_numeric_param(float(height), 256, 1440, False):
+                    return ("", "Error: Invalid height value")
 
             # Log generation details
             print(f"\nGenerating image with model: {model.model_name}")
