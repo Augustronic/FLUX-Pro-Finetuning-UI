@@ -114,8 +114,6 @@ class ModelManager:
                         except Exception as e:
                             print(f"Error loading model: {e}")
                             continue
-                for model in self.models.values():
-                    print(f"- {model.model_name} ({model.trigger_word})")
         except Exception as e:
             print(f"Error loading models: {e}")
             self.models = {}
@@ -174,11 +172,7 @@ class ModelManager:
 
     def list_models(self) -> List[ModelMetadata]:
         """List all models."""
-        models = list(self.models.values())
-        print(f"Listing {len(models)} models:")
-        for model in models:
-            print(f"- {model.model_name} ({model.trigger_word})")
-        return models
+        return list(self.models.values())
 
     def get_model_details(self, finetune_id: str) -> Optional[dict]:
         """Get model details from API."""

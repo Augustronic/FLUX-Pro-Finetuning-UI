@@ -2,7 +2,7 @@ import gradio as gr
 import time
 import os
 import re
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Optional, Tuple
 import base64
 import requests
 import json
@@ -26,13 +26,9 @@ class ImageGenerationUI:
             
         self.manager = model_manager
         
-        # Use system temp directory for generated images with secure permissions
-        self.images_dir = Path(tempfile.gettempdir()) / "generated_images"
-        if not self.images_dir.exists():
-            self.images_dir.mkdir(mode=0o700, parents=True)  # Only owner can read/write
-        else:
-            # Update permissions if directory exists
-            os.chmod(self.images_dir, 0o700)
+        # Create images directory in current working directory
+        self.images_dir = Path("generated_images")
+        self.images_dir.mkdir(exist_ok=True)
 
     def _format_model_choice(self, model: Any) -> str:
         """Format model metadata for dropdown display.
@@ -240,8 +236,8 @@ class ImageGenerationUI:
         prompt: str,
         negative_prompt: str,
         aspect_ratio: str,
-        steps: Optional[int],
-        guidance: Optional[float],
+        num_steps: Optional[int],
+        guidance_scale: Optional[float],
         strength: float,
         seed: Optional[int],
         output_format: str = "jpeg",
@@ -250,7 +246,7 @@ class ImageGenerationUI:
         width: Optional[int] = None,
         height: Optional[int] = None,
         raw_mode: bool = False,
-    ) -> Tuple[str, str]:
+    ) -> Tuple[Any, str]:
         """
         Generate an image using the selected model and parameters.
 
@@ -306,11 +302,11 @@ class ImageGenerationUI:
             if not self._validate_numeric_param(strength, 0.1, 2.0, False):
                 return ("", "Error: Invalid strength value (must be between 0.1 and 2.0)")
                 
-            if not self._validate_numeric_param(guidance, 1.5, 5.0):
-                return ("", "Error: Invalid guidance value (must be between 1.5 and 5.0)")
+            if not self._validate_numeric_param(guidance_scale, 1.5, 5.0):
+                return ("", "Error: Invalid guidance scale value (must be between 1.5 and 5.0)")
                 
-            if steps is not None and not self._validate_numeric_param(float(steps), 1, 50, False):
-                return ("", "Error: Invalid steps value (must be between 1 and 50)")
+            if num_steps is not None and not self._validate_numeric_param(float(num_steps), 1, 50, False):
+                return ("", "Error: Invalid number of steps value (must be between 1 and 50)")
                 
             if safety_tolerance not in range(7):  # 0 to 6
                 return ("", "Error: Invalid safety tolerance value")
@@ -338,43 +334,26 @@ class ImageGenerationUI:
             print(f"Endpoint: {endpoint}")
             print(f"Prompt: {prompt}")
 
-            # Common parameters
-            params: Dict[str, Any] = {
+            # Prepare parameters based on example implementation
+            params = {
                 "finetune_id": model_id,
                 "prompt": prompt.strip(),
-                "output_format": output_format.lower(),
-                "num_images": 1,
                 "finetune_strength": strength,
+                "endpoint": endpoint,
+                "negative_prompt": negative_prompt if negative_prompt else None,
+                "num_images": 1,
+                "width": width or 1024,
+                "height": height or 768,
+                "num_inference_steps": num_steps,
+                "guidance_scale": guidance_scale,
+                "output_format": output_format.lower(),
                 "safety_tolerance": safety_tolerance,
-                "seed": seed if seed is not None else 0
+                "scheduler": "DPM++ 2M Karras"
             }
 
-            # Add endpoint-specific parameters
-            if endpoint == self.ENDPOINT_ULTRA:
-                params.update({
-                    "aspect_ratio": aspect_ratio,
-                    "guidance_scale": guidance or 2.5
-                })
-            else:  # ENDPOINT_STANDARD
-                # Ensure parameters are within valid ranges
-                steps_value = min(max(steps or 40, 1), 50)
-                guidance_value = min(max(guidance or 2.5, 1.5), 5.0)
-                width_value = (width or 1024) // 32 * 32
-                height_value = (height or 768) // 32 * 32
-
-                params.update({
-                    "steps": steps_value,
-                    "guidance": float(guidance_value),
-                    "width": width_value,
-                    "height": height_value,
-                    "raw": raw_mode,
-                    "prompt_upsampling": prompt_upsampling
-                })
-
+            # Remove None values and ensure negative_prompt is included if present
             if negative_prompt:
                 params["negative_prompt"] = negative_prompt
-
-            # Remove None values
             params = {k: v for k, v in params.items() if v is not None}
 
             print("Sending request to", endpoint)
@@ -410,18 +389,12 @@ class ImageGenerationUI:
                     if not image_url:
                         return ("", "Error: No image URL in completed status")
 
-                    print(f"Generation completed: {image_url[:70]}...")
-                    local_path = self._save_image_from_url(
-                        image_url, output_format
-                    )
+                    print(f"Generation completed: {image_url}")
+                    local_path = self._save_image_from_url(image_url, output_format)
                     if not local_path:
-                        return ("", "Error: Failed to save image")
-
-                    return (
-                        local_path,
-                        f"Generation completed successfully! "
-                        f"Image saved as {output_format.upper()}"
-                    )
+                        return None, "Error: Failed to save image"
+                        
+                    return local_path, f"Generation completed successfully! Image saved as {output_format.upper()}"
 
                 print(
                     f"Status: {state} "
@@ -550,24 +523,24 @@ class ImageGenerationUI:
                                     info="Must be a multiple of 32",
                                 )
 
-                            steps = gr.Slider(
+                            num_inference_steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
-                                value=40,
+                                value=30,
                                 step=1,
-                                label="Steps",
+                                label="Number of Steps",
                                 info=(
                                     "Number of generation steps "
                                     "(quality vs speed)"
                                 ),
                             )
 
-                            guidance = gr.Slider(
+                            guidance_scale = gr.Slider(
                                 minimum=1.5,
-                                maximum=5.0,
-                                value=2.5,
+                                maximum=7.5,
+                                value=7.5,
                                 step=0.1,
-                                label="Guidance scale",
+                                label="Guidance Scale",
                                 info="Controls prompt adherence strength",
                             )
 
@@ -626,10 +599,10 @@ class ImageGenerationUI:
 
                 with gr.Column():
                     output_image = gr.Image(
-                        label="Generated image",
+                        label="Generated Image",
                         type="filepath",
                         interactive=False,
-                        show_download_button=True,
+                        show_download_button=True
                     )
 
             # Event handlers
@@ -667,7 +640,7 @@ class ImageGenerationUI:
             # Generation inputs
             generate_inputs = [
                 endpoint, model_dropdown, prompt, negative_prompt,
-                aspect_ratio, steps, guidance, strength,
+                aspect_ratio, num_inference_steps, guidance_scale, strength,
                 seed, output_format, prompt_upsampling, safety_tolerance,
                 width, height, raw_mode,
             ]
