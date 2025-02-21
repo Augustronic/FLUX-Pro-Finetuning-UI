@@ -42,7 +42,7 @@ model_finetuned_ids.txt
 latest_finetune.json
 finetune_response.json
 *.zip
-generated_images/
+generated_images/*
 data/
 
 # Log files
