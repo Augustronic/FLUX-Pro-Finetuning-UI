@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Dict, Any
 
+
 class ConfigManager:
     def __init__(self):
         self.config_dir = Path("config")
@@ -58,14 +59,19 @@ class ConfigManager:
             if field not in self.config:
                 raise ValueError(f"Missing required field: {field}")
             if not isinstance(self.config[field], field_type):
-                raise TypeError(f"Field {field} must be of type {field_type.__name__}")
+                raise TypeError(
+                    f"Field {field} must be of type {field_type.__name__}"
+                )
         
         if self.config["api_key"] == "your-api-key-here":
-            raise ValueError("Please update config.json with your actual API key")
+            raise ValueError(
+                "Please update config.json with your actual API key"
+            )
         
         # Ensure storage paths exist
         storage = self.config["storage"]
         for dir_name in storage.values():
+            # Create parent directory first if needed
             Path(dir_name).mkdir(exist_ok=True)
     
     def get_api_key(self) -> str:
@@ -79,4 +85,4 @@ class ConfigManager:
     def get_storage_path(self, key: str) -> Path:
         """Get a storage path from config."""
         storage = self.config.get("storage", {})
-        return Path(storage.get(key, key)) 
+        return Path(storage.get(key, key))

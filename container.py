@@ -1,7 +1,7 @@
 """Dependency injection container for the FLUX Pro Finetuning UI."""
 
 from typing import Dict, Optional, Any
-from config_manager import ConfigManager
+from config.config_manager import ConfigManager
 from model_manager import ModelManager
 
 

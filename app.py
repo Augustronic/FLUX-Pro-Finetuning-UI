@@ -3,7 +3,7 @@ from finetune_ui import FineTuneUI
 from inference_ui import ImageGenerationUI
 from model_browser_ui import ModelBrowserUI
 from model_manager import ModelManager
-from config_manager import ConfigManager
+from config.config_manager import ConfigManager
 
 
 def create_app():

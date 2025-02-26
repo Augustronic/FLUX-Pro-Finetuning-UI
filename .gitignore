@@ -51,3 +51,4 @@ data/
 # Local data / configuration
 .clinerules
 %LOCALAPPDATA%/Temp/gradio/test.txt
+desktop.ini

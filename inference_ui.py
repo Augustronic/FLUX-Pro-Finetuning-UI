@@ -137,57 +137,47 @@ class ImageGenerationUI:
             return ""
 
         try:
-            # Create a temporary file first
-            temp_file = Path(tempfile.mktemp(dir=self.images_dir))
+            # Create final filename
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = f"generated_image_{timestamp}.{output_format.lower()}"
+            final_path = self.images_dir / filename
+
+            # Get image data
+            if image_url.startswith("data:"):
+                header, encoded = image_url.split(",", 1)
+                image_data = base64.b64decode(encoded)
+            else:
+                # Use timeout and size limit for URL downloads
+                response = requests.get(
+                    image_url,
+                    timeout=30,
+                    stream=True,
+                    headers={"User-Agent": "FLUX-Pro-Finetuning-UI"}
+                )
+                response.raise_for_status()
+                
+                # Check content type
+                content_type = response.headers.get("content-type", "")
+                if not content_type.startswith("image/"):
+                    raise ValueError("Invalid content type")
+                
+                # Read with size limit (50MB)
+                max_size = 50 * 1024 * 1024
+                content = b""
+                for chunk in response.iter_content(chunk_size=8192):
+                    content += chunk
+                    if len(content) > max_size:
+                        raise ValueError("Image too large")
+                image_data = content
+
+            # Write directly to final path
+            with open(final_path, "wb") as f:
+                f.write(image_data)
+
+            # Set secure permissions
+            os.chmod(final_path, 0o600)
             
-            try:
-                if image_url.startswith("data:"):
-                    header, encoded = image_url.split(",", 1)
-                    image_data = base64.b64decode(encoded)
-                else:
-                    # Use timeout and size limit for URL downloads
-                    response = requests.get(
-                        image_url,
-                        timeout=30,
-                        stream=True,
-                        headers={"User-Agent": "FLUX-Pro-Finetuning-UI"}
-                    )
-                    response.raise_for_status()
-                    
-                    # Check content type
-                    content_type = response.headers.get("content-type", "")
-                    if not content_type.startswith("image/"):
-                        raise ValueError("Invalid content type")
-                    
-                    # Read with size limit (50MB)
-                    max_size = 50 * 1024 * 1024
-                    content = b""
-                    for chunk in response.iter_content(chunk_size=8192):
-                        content += chunk
-                        if len(content) > max_size:
-                            raise ValueError("Image too large")
-                    image_data = content
-
-                # Write to temporary file
-                with open(temp_file, "wb") as f:
-                    f.write(image_data)
-
-                # Set secure permissions
-                os.chmod(temp_file, 0o600)
-
-                # Create final filename
-                timestamp = time.strftime("%Y%m%d-%H%M%S")
-                filename = f"generated_image_{timestamp}.{output_format.lower()}"
-                final_path = self.images_dir / filename
-
-                # Atomic rename
-                temp_file.replace(final_path)
-                return str(final_path)
-
-            finally:
-                # Cleanup temp file if it still exists
-                if temp_file.exists():
-                    temp_file.unlink()
+            return str(final_path)
 
         except Exception as e:
             print(f"Error saving image: {e}")

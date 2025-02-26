@@ -6,7 +6,7 @@ import time
 from model_manager import ModelManager, ModelMetadata
 from finetune import FineTuneClient
 from check_progress import FineTuneMonitor
-from config_manager import ConfigManager
+from config.config_manager import ConfigManager
 
 
 class FineTuneUI:
