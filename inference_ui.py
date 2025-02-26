@@ -10,6 +10,7 @@ from pathlib import Path
 import tempfile
 
 from model_manager import ModelManager
+from constants import Paths
 
 
 class ImageGenerationUI:
@@ -26,8 +27,8 @@ class ImageGenerationUI:
             
         self.manager = model_manager
         
-        # Create images directory in current working directory
-        self.images_dir = Path("generated_images")
+        # Use images directory from constants
+        self.images_dir = Paths.IMAGES_DIR
         self.images_dir.mkdir(exist_ok=True)
 
     def _format_model_choice(self, model: Any) -> str:
@@ -451,12 +452,12 @@ class ImageGenerationUI:
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
-                            value=model_choices[0] if model_choices else None,
+                            value=None,  # Start with no selection
                             label="Select model",
                             info=(
                                 "Model trigger word shown in parentheses. "
                                 "Include in prompt."
-                            ),
+                            )
                         )
                         refresh_btn = gr.Button("🔄 Refresh models")
 
@@ -615,7 +616,7 @@ class ImageGenerationUI:
                         choice = self._format_model_choice(model)
                         choices.append(choice)
                         print(f"Refreshed model choice: {choice}")
-                return choices
+                return gr.update(choices=choices, value=choices[0] if choices else None)
 
             refresh_btn.click(
                 fn=refresh_models,

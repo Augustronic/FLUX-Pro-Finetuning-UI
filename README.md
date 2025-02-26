@@ -1,187 +1,180 @@
-# FLUX 1.1 Pro & Ultra Finetuning UI
+# FLUX Pro Finetuning UI
 
-A professional GUI application for finetuning FLUX 1.1 Pro and Ultra models, supporting both LoRA and Full finetuning approaches.
-
-## Supported Models
-
-- FLUX Pro 1.1 Ultra (Latest)
-- FLUX Pro 1.1 Standard
-  Both models support LoRA and Full finetuning methods.
-
-## Official Documentation
-
-- [API Documentation](https://api.us1.bfl.ai/scalar#tag/tasks/POST/v1/finetune)
-- [Finetuning Guide](https://docs.bfl.ml/finetuning/)
+A professional UI for model finetuning and image generation with robust error handling, logging, and validation.
 
 ## Features
 
-- 🎯 **Advanced Finetuning**
+- **Robust Error Handling**: Centralized error management with detailed context and severity levels
+- **Structured Logging**: JSON-formatted logs with rotation and comprehensive error tracking
+- **Input Validation**: Extensive validation system with customizable rules
+- **Configuration Management**: Environment-aware configuration with validation and overrides
+- **Comprehensive Testing**: Full test coverage for all core utilities
 
-  - Full support for FLUX 1.1 Pro & Ultra models
-  - LoRA finetuning (fast, memory-efficient)
-  - Full model finetuning (comprehensive)
-  - Multiple training modes (character, product, style, general)
-  - Configurable parameters (iterations, learning rate, etc.)
-  - Auto-captioning support
-  - Real-time progress monitoring
+## Setup
 
-- 📊 **Model Management**
-
-  - Browse and manage FLUX Pro fine-tuned models
-  - View model details and parameters
-  - Easy model selection for inference
-  - Track LoRA ranks and training progress
-
-- 🖼️ **Pro & Ultra Image Generation**
-  - Generate with FLUX Pro 1.1 Ultra for highest quality
-  - Standard FLUX Pro 1.1 generation support
-  - Adjust generation parameters
-  - Download and manage generated images
-
-## Quick Start
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/Augustronic/FLUX-Pro-Finetuning-UI.git
-   cd FLUX-Pro-Finetuning-UI
-   ```
-
-2. **Install Dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure API Key**
-
-   - Copy `config.example.json` to `config.json`
-   - Replace `your-api-key-here` with your FLUX Pro API key
-
-   ```json
-   {
-     "api_key": "your-api-key-here",
-     "api_host": "api.us1.bfl.ai",
-     "storage": {
-       "models_dir": "data",
-       "images_dir": "generated_images"
-     }
-   }
-   ```
-
-4. **Run the Application**
-   ```bash
-   python app.py
-   ```
-
-## Detailed Usage Guide
-
-### Finetuning with FLUX Pro
-
-1. **Prepare Your Training Data**
-
-   - Create a Base64 encoded ZIP file containing your training images
-   - Supported formats: jpeg, png
-   - Recommended: 15-20 high-quality images
-   - Ensure consistent style/subject matter
-
-2. **Choose Finetuning Method**
-
-   - **LoRA Finetuning**
-
-     - Faster training
-     - Lower resource requirements
-     - Great for style and character models
-     - Configurable rank (4-128)
-
-   - **Full Finetuning**
-     - Complete model customization
-     - Higher resource requirements
-     - Best for comprehensive training
-     - Longer training time
-
-3. **Start Finetuning**
-
-   - Upload your ZIP file
-   - Fill in model details:
-     - Model Name: A unique identifier
-     - Trigger Word: Word to invoke your model
-     - Training Mode: character/product/style/general
-     - Finetuning Type: LoRA or Full
-   - Configure advanced settings if needed
-   - Click "Start Finetuning"
-
-4. **Monitor Progress**
-   - Copy the provided Fine-tune ID
-   - Use the "Check Status" button to monitor progress
-   - Status will show:
-     - Pending: Job is queued
-     - Running: Currently training
-     - Ready: Training complete
-     - Failed: Check error message
-
-### Model Browser
-
-- View all your FLUX Pro fine-tuned models
-- Sort and filter by various parameters
-- Quick copy of model IDs and trigger words
-- View detailed model information including:
-  - Training method (LoRA/Full)
-  - Model parameters
-  - Training status
-
-### Image Generation
-
-1. Select a model from the dropdown
-2. Enter your prompt (include the trigger word)
-3. Adjust generation parameters if needed
-4. Click "Generate"
-5. Download generated images
-
-## Directory Structure
-
-```
-flux-pro-ft/
-├── app.py              # Main application entry point
-├── config.example.json # Example configuration
-├── requirements.txt    # Python dependencies
-├── data/               # Model storage directory
-└── generated_images/   # Output directory for generated images
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/FLUX-Pro-Finetuning-UI.git
+cd FLUX-Pro-Finetuning-UI
 ```
 
-## Important Notes
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-- **API Key**: Never commit your `config.json` with real API key
-- **Storage**: The application creates necessary directories on first run
-- **Models**: Your models are stored locally in `data/`
-- **Images**: Generated images are saved in `generated_images/`
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## Troubleshooting
+4. Create configuration:
+```bash
+cp config.example.json config.json
+```
 
-### Common Issues
+5. Edit `config.json` with your settings:
+```json
+{
+    "api_key": "your_api_key",
+    "api_endpoint": "https://api.example.com",
+    "model_defaults": {
+        "steps": 40,
+        "guidance": 2.5,
+        "strength": 1.0
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "app.log",
+        "format": "json"
+    },
+    "performance": {
+        "cache_size": 1024,
+        "request_timeout": 30,
+        "max_retries": 3
+    },
+    "security": {
+        "rate_limit": 60,
+        "allowed_origins": ["localhost"],
+        "token_expiry": 3600
+    }
+}
+```
 
-1. **API Key Error**
+## Running the Application
 
-   - Ensure `config.json` exists with valid API key
-   - Check API key permissions
+Launch the application:
+```bash
+venv/bin/activate  # On Windows: venv\Scripts\activate
+python app.py
+```
 
-2. **Missing Directories**
+The UI will be available at `http://localhost:7860`
 
-   - The app creates required directories automatically
-   - Ensure write permissions in the app directory
+## Development
 
-3. **Import Errors**
-   - Verify all dependencies are installed
-   - Check Python version (3.10+ required)
+### Project Structure
+
+```
+FLUX-Pro-Finetuning-UI/
+├── app.py                 # Main application entry point
+├── ui/                    # UI components
+│   ├── base.py           # Base UI component class
+│   ├── image_generation.py
+│   ├── model_selection.py
+│   └── parameter_config.py
+├── utils/                 # Core utilities
+│   ├── error_handling/   # Error management
+│   ├── logging/          # Logging system
+│   ├── validation/       # Input validation
+│   └── config/           # Configuration management
+├── tests/                # Test suite
+│   └── utils/           # Utility tests
+└── docs/                 # Documentation
+```
+
+### Running Tests
+
+Run the full test suite:
+```bash
+pytest
+```
+
+Run tests with coverage:
+```bash
+pytest --cov=utils tests/
+```
+
+### Code Quality
+
+Format code:
+```bash
+black .
+isort .
+```
+
+Run linting:
+```bash
+flake8
+mypy .
+```
+
+## Environment Variables
+
+The following environment variables can override configuration:
+
+- `FLUX_API_KEY`: Override API key
+- `FLUX_API_ENDPOINT`: Override API endpoint
+- `FLUX_ENV`: Set environment (development, production, test)
+
+Example:
+```bash
+export FLUX_ENV=development
+export FLUX_API_KEY=your_api_key
+```
+
+## Error Handling
+
+The application uses a centralized error handling system with different severity levels:
+
+- INFO: Informational messages
+- WARNING: Non-critical issues
+- ERROR: Serious issues that need attention
+- CRITICAL: System-critical issues
+
+Errors are logged with context and can be found in the log files under the `logs/` directory.
+
+## Logging
+
+Logs are stored in JSON format for easy parsing and analysis. Log files are automatically rotated when they reach 10MB, keeping the last 5 files.
+
+Example log entry:
+```json
+{
+    "timestamp": "2025-02-26T12:34:56.789Z",
+    "level": "ERROR",
+    "logger": "image_generation",
+    "message": "Failed to generate image",
+    "extra": {
+        "component": "ImageGenerationComponent",
+        "operation": "generate_image",
+        "details": {
+            "model_id": "123",
+            "error": "API timeout"
+        }
+    }
+}
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Make your changes
+4. Run tests and ensure they pass
+5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+See [LICENSE](LICENSE) file for details.
