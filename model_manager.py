@@ -256,7 +256,7 @@ class ModelManager:
         Raises:
             ValueError: If endpoint or parameters are invalid
         """
-        if not isinstance(endpoint, str) or not re.match(r'^[\w-]+$', endpoint):
+        if not isinstance(endpoint, str) or not re.match(r'^[\w.-]+(?:[-][\w.-]+)*$', endpoint):
             raise ValueError("Invalid endpoint format")
 
         try:

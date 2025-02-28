@@ -8,6 +8,9 @@ import requests
 import json
 from pathlib import Path
 import tempfile
+import numpy as np
+from PIL import Image
+import io
 
 from model_manager import ModelManager
 from constants import Paths
@@ -123,25 +126,20 @@ class ImageGenerationUI:
             except Exception:
                 return False
         else:
-            # Validate HTTP(S) URL
-            return bool(re.match(r'^https?://[\w\-.]+(:\d+)?(/[\w\-./]*)?$', url))
+            # Validate HTTP(S) URL with query parameters and encoded characters
+            return bool(re.match(r'^https?://[\w\-.]+(?::\d+)?(?:/[^?]*)?(?:\?[^#]*)?$', url))
 
-    def _save_image_from_url(self, image_url: str, output_format: str) -> str:
-        """Save image from URL or base64 data to a file with secure handling."""
+    def _save_image_from_url(self, image_url: str, output_format: str) -> Optional[np.ndarray]:
+        """Get image from URL or base64 data and return as numpy array or None if failed."""
         if not isinstance(output_format, str) or output_format.lower() not in ["jpeg", "png"]:
             print("Invalid output format")
-            return ""
+            return None
             
         if not self._validate_image_url(image_url):
             print("Invalid image URL format")
-            return ""
+            return None
 
         try:
-            # Create final filename
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            filename = f"generated_image_{timestamp}.{output_format.lower()}"
-            final_path = self.images_dir / filename
-
             # Get image data
             if image_url.startswith("data:"):
                 header, encoded = image_url.split(",", 1)
@@ -170,18 +168,28 @@ class ImageGenerationUI:
                         raise ValueError("Image too large")
                 image_data = content
 
-            # Write directly to final path
-            with open(final_path, "wb") as f:
-                f.write(image_data)
+            # Convert to numpy array
+            img = Image.open(io.BytesIO(image_data))
+            img_array = np.array(img)
 
-            # Set secure permissions
-            os.chmod(final_path, 0o600)
-            
-            return str(final_path)
+            # Also save to file as backup
+            try:
+                timestamp = time.strftime("%Y%m%d-%H%M%S")
+                filename = f"generated_image_{timestamp}.{output_format.lower()}"
+                final_path = self.images_dir / filename
+                
+                with open(final_path, "wb") as f:
+                    f.write(image_data)
+                os.chmod(final_path, 0o600)
+                print(f"Backup saved to {final_path}")
+            except Exception as save_error:
+                print(f"Warning: Could not save backup file: {save_error}")
+
+            return img_array
 
         except Exception as e:
-            print(f"Error saving image: {e}")
-            return ""
+            print(f"Error processing image: {e}")
+            return None
 
     def _validate_prompt(self, prompt: str) -> bool:
         """Validate prompt text for safety and format."""
@@ -237,7 +245,7 @@ class ImageGenerationUI:
         width: Optional[int] = None,
         height: Optional[int] = None,
         raw_mode: bool = False,
-    ) -> Tuple[Any, str]:
+    ) -> Tuple[Optional[np.ndarray], str]:
         """
         Generate an image using the selected model and parameters.
 
@@ -259,7 +267,7 @@ class ImageGenerationUI:
             raw_mode: Whether to use raw mode
 
         Returns:
-            Tuple of (image path, status message)
+            Tuple of (numpy array of image or None, status message)
             
         Raises:
             ValueError: If any input parameters are invalid
@@ -267,57 +275,57 @@ class ImageGenerationUI:
         try:
             # Validate endpoint
             if not endpoint or endpoint not in [self.ENDPOINT_ULTRA, self.ENDPOINT_STANDARD]:
-                return ("", "Error: Invalid endpoint selection")
+                return (None, "Error: Invalid endpoint selection")
 
             # Validate model selection
             if not model_choice:
-                return ("", "Error: Please select a model")
+                return (None, "Error: Please select a model")
                 
             model_id = self._get_model_id_from_choice(model_choice)
             if not model_id:
-                return ("", "Error: Invalid model selection")
+                return (None, "Error: Invalid model selection")
 
             model = self.manager.get_model(model_id)
             if not model:
-                return ("", "Error: Model not found")
+                return (None, "Error: Model not found")
                 
             # Validate prompt
             if not self._validate_prompt(prompt):
-                return ("", "Error: Invalid prompt format or content")
+                return (None, "Error: Invalid prompt format or content")
                 
             # Validate negative prompt if provided
             if negative_prompt and not self._validate_prompt(negative_prompt):
-                return ("", "Error: Invalid negative prompt format")
+                return (None, "Error: Invalid negative prompt format")
                 
             # Validate numeric parameters
             if not self._validate_numeric_param(strength, 0.1, 2.0, False):
-                return ("", "Error: Invalid strength value (must be between 0.1 and 2.0)")
+                return (None, "Error: Invalid strength value (must be between 0.1 and 2.0)")
                 
             if not self._validate_numeric_param(guidance_scale, 1.5, 5.0):
-                return ("", "Error: Invalid guidance scale value (must be between 1.5 and 5.0)")
+                return (None, "Error: Invalid guidance scale value (must be between 1.5 and 5.0)")
                 
             if num_steps is not None and not self._validate_numeric_param(float(num_steps), 1, 50, False):
-                return ("", "Error: Invalid number of steps value (must be between 1 and 50)")
+                return (None, "Error: Invalid number of steps value (must be between 1 and 50)")
                 
             if safety_tolerance not in range(7):  # 0 to 6
-                return ("", "Error: Invalid safety tolerance value")
+                return (None, "Error: Invalid safety tolerance value")
                 
             # Validate output format
             if output_format not in ["jpeg", "png"]:
-                return ("", "Error: Invalid output format")
+                return (None, "Error: Invalid output format")
                 
             # Validate aspect ratio for ultra endpoint
             if endpoint == self.ENDPOINT_ULTRA:
                 valid_ratios = ["21:9", "16:9", "3:2", "4:3", "1:1", "3:4", "2:3", "9:16", "9:21"]
                 if aspect_ratio not in valid_ratios:
-                    return ("", "Error: Invalid aspect ratio")
+                    return (None, "Error: Invalid aspect ratio")
                     
             # Validate dimensions for standard endpoint
             if endpoint == self.ENDPOINT_STANDARD:
                 if width is not None and not self._validate_numeric_param(float(width), 256, 1440, False):
-                    return ("", "Error: Invalid width value")
+                    return (None, "Error: Invalid width value")
                 if height is not None and not self._validate_numeric_param(float(height), 256, 1440, False):
-                    return ("", "Error: Invalid height value")
+                    return (None, "Error: Invalid height value")
 
             # Log generation details
             print(f"\nGenerating image with model: {model.model_name}")
@@ -325,26 +333,39 @@ class ImageGenerationUI:
             print(f"Endpoint: {endpoint}")
             print(f"Prompt: {prompt}")
 
-            # Prepare parameters based on example implementation
+            # Common parameters
             params = {
                 "finetune_id": model_id,
-                "prompt": prompt.strip(),
-                "finetune_strength": strength,
-                "endpoint": endpoint,
-                "negative_prompt": negative_prompt if negative_prompt else None,
-                "num_images": 1,
-                "width": width or 1024,
-                "height": height or 768,
-                "num_inference_steps": num_steps,
-                "guidance_scale": guidance_scale,
+                "prompt": prompt.strip() if prompt else "",
                 "output_format": output_format.lower(),
-                "safety_tolerance": safety_tolerance,
-                "scheduler": "DPM++ 2M Karras"
+                "finetune_strength": strength,
+                "safety_tolerance": safety_tolerance
             }
+            
+            if endpoint == self.ENDPOINT_ULTRA:
+                # Ultra endpoint parameters
+                params.update({
+                    "aspect_ratio": aspect_ratio,
+                })
+                # Optional parameters for ultra endpoint
+                if seed is not None and seed > 0:
+                    params["seed"] = seed
+            else:  # ENDPOINT_STANDARD
+                # Standard endpoint parameters
+                params.update({
+                    "steps": num_steps,
+                    "guidance": guidance_scale,
+                    "width": width or 1024,
+                    "height": height or 768,
+                    "prompt_upsampling": prompt_upsampling,
+                    "raw": raw_mode
+                })
+                if seed is not None and seed > 0:
+                    params["seed"] = seed
+                if negative_prompt:
+                    params["negative_prompt"] = negative_prompt
 
-            # Remove None values and ensure negative_prompt is included if present
-            if negative_prompt:
-                params["negative_prompt"] = negative_prompt
+            # Remove any None values
             params = {k: v for k, v in params.items() if v is not None}
 
             print("Sending request to", endpoint)
@@ -353,11 +374,11 @@ class ImageGenerationUI:
             # Start generation
             result = self.manager.generate_image(endpoint=endpoint, **params)
             if not result:
-                return ("", "Error: No response from generation API")
+                return (None, "Error: No response from generation API")
 
             inference_id = result.get("id")
             if not inference_id:
-                return ("", "Error: No inference ID received")
+                return (None, "Error: No inference ID received")
 
             print(f"Inference ID: {inference_id}")
 
@@ -373,19 +394,19 @@ class ImageGenerationUI:
                 if state == "Failed":
                     error_msg = status.get("error", "Unknown error")
                     print(f"Generation failed: {error_msg}")
-                    return ("", f"Generation failed: {error_msg}")
+                    return (None, f"Generation failed: {error_msg}")
 
                 elif state == "Ready":
                     image_url = status.get("result", {}).get("sample")
                     if not image_url:
-                        return ("", "Error: No image URL in completed status")
+                        return (None, "Error: No image URL in completed status")
 
                     print(f"Generation completed: {image_url}")
-                    local_path = self._save_image_from_url(image_url, output_format)
-                    if not local_path:
-                        return None, "Error: Failed to save image"
+                    img_array = self._save_image_from_url(image_url, output_format)
+                    if img_array is None:
+                        return (None, "Error: Failed to save image")
                         
-                    return local_path, f"Generation completed successfully! Image saved as {output_format.upper()}"
+                    return (img_array, f"Generation completed successfully! Image saved as {output_format.upper()}")
 
                 print(
                     f"Status: {state} "
@@ -394,11 +415,11 @@ class ImageGenerationUI:
                 time.sleep(check_interval)
                 attempt += 1
 
-            return ("", "Error: Generation timed out")
+            return (None, "Error: Generation timed out")
 
         except Exception as e:
             print(f"Error in generation: {str(e)}")
-            return ("", f"Error generating image: {str(e)}")
+            return (None, f"Error generating image: {str(e)}")
 
     def create_ui(self) -> gr.Blocks:
         """Create the image generation interface."""
@@ -528,11 +549,11 @@ class ImageGenerationUI:
 
                             guidance_scale = gr.Slider(
                                 minimum=1.5,
-                                maximum=7.5,
-                                value=7.5,
+                                maximum=5.0,
+                                value=2.5,
                                 step=0.1,
                                 label="Guidance Scale",
-                                info="Controls prompt adherence strength",
+                                info="Controls prompt adherence strength (1.5 to 5.0)",
                             )
 
                             prompt_upsampling = gr.Checkbox(
@@ -591,7 +612,7 @@ class ImageGenerationUI:
                 with gr.Column():
                     output_image = gr.Image(
                         label="Generated Image",
-                        type="filepath",
+                        type="numpy",
                         interactive=False,
                         show_download_button=True
                     )
