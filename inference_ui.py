@@ -191,6 +191,40 @@ class ImageGenerationUI:
             print(f"Error processing image: {e}")
             return None
 
+    def _convert_image_to_base64(self, image: Optional[np.ndarray], format: str = "jpeg") -> Optional[str]:
+        """Convert numpy image array to base64 string.
+        
+        Args:
+            image: Numpy array of image
+            format: Image format (jpeg or png)
+            
+        Returns:
+            Base64 encoded image string or None if conversion failed
+        """
+        if image is None:
+            return None
+            
+        try:
+            # Convert numpy array to PIL Image
+            pil_image = Image.fromarray(image)
+            
+            # Save to bytes buffer
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format=format.upper())
+            
+            # Convert to base64
+            img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            # Format as data URL
+            mime_type = f"image/{format.lower()}"
+            data_url = f"data:{mime_type};base64,{img_str}"
+            
+            return data_url
+            
+        except Exception as e:
+            print(f"Error converting image to base64: {e}")
+            return None
+
     def _validate_prompt(self, prompt: str) -> bool:
         """Validate prompt text for safety and format."""
         if not prompt or not isinstance(prompt, str):
@@ -238,13 +272,16 @@ class ImageGenerationUI:
         num_steps: Optional[int],
         guidance_scale: Optional[float],
         strength: float,
+        strength_standard: float,
         seed: Optional[int],
+        width: Optional[int],
+        height: Optional[int],
+        image_prompt: Optional[np.ndarray] = None,
         output_format: str = "jpeg",
         prompt_upsampling: bool = False,
-        safety_tolerance: int = 2,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
-        raw_mode: bool = False,
+        image_prompt_strength: float = 0.1,
+        ultra_prompt_upsampling: bool = False,
+        safety_tolerance: int = 2
     ) -> Tuple[Optional[np.ndarray], str]:
         """
         Generate an image using the selected model and parameters.
@@ -253,18 +290,22 @@ class ImageGenerationUI:
             endpoint: API endpoint to use
             model_choice: Selected model from dropdown
             prompt: Text prompt for generation
+            image_prompt: Optional image array to use as a prompt
             negative_prompt: Things to avoid in generation
             aspect_ratio: Image aspect ratio (ultra endpoint)
             steps: Number of generation steps
             guidance: Guidance scale for generation
-            strength: Model strength (0.1-2.0)
+            strength: Finetune strength for ultra endpoint (0.1-2.0)
+            strength_standard: Finetune strength for standard endpoint (0.1-2.0)
             seed: Random seed for reproducibility
             output_format: Output image format
+            image_prompt_strength: Blend between prompt and image prompt (0-1)
+ 
+            ultra_prompt_upsampling: Whether to enhance prompt for ultra endpoint
             prompt_upsampling: Whether to enhance prompt
             safety_tolerance: Safety check level (0-6)
             width: Image width (standard endpoint)
             height: Image height (standard endpoint)
-            raw_mode: Whether to use raw mode
 
         Returns:
             Tuple of (numpy array of image or None, status message)
@@ -332,34 +373,61 @@ class ImageGenerationUI:
             print(f"Model ID: {model_id}")
             print(f"Endpoint: {endpoint}")
             print(f"Prompt: {prompt}")
+            print(f"Standard prompt_upsampling: {prompt_upsampling}")
+            print(f"Ultra prompt_upsampling: {ultra_prompt_upsampling}")
 
             # Common parameters
+            # Convert image_prompt to base64 if provided
+            image_prompt_base64 = None
+            # Temporarily disable image prompt feature due to validation issues
+            # if image_prompt is not None:
+            #     image_prompt_base64 = self._convert_image_to_base64(image_prompt, output_format)
+            #     print(f"Image prompt converted to base64 (length: {len(image_prompt_base64) if image_prompt_base64 else 0})")
+            
+            # Build parameters
             params = {
                 "finetune_id": model_id,
                 "prompt": prompt.strip() if prompt else "",
                 "output_format": output_format.lower(),
-                "finetune_strength": strength,
                 "safety_tolerance": safety_tolerance
+                # Temporarily disable image prompt feature
+                # "image_prompt": image_prompt_base64,
             }
+            
+            print(f"DEBUG: Initial common params: {params}")
             
             if endpoint == self.ENDPOINT_ULTRA:
                 # Ultra endpoint parameters
                 params.update({
+                    "finetune_strength": strength,
                     "aspect_ratio": aspect_ratio,
+                    # Temporarily disable image prompt strength parameter
+                    # "image_prompt_strength": image_prompt_strength
+                    # Note: finetune_strength is already in common parameters
                 })
+                
+                # Use the ultra prompt upsampling parameter
+                params["prompt_upsampling"] = ultra_prompt_upsampling
+                print(f"DEBUG: Setting ultra prompt_upsampling to {ultra_prompt_upsampling}")
+                
                 # Optional parameters for ultra endpoint
                 if seed is not None and seed > 0:
                     params["seed"] = seed
+                    
             else:  # ENDPOINT_STANDARD
                 # Standard endpoint parameters
                 params.update({
+                    "finetune_strength": strength_standard,
                     "steps": num_steps,
+                    # Note: finetune_strength is already in common parameters
                     "guidance": guidance_scale,
                     "width": width or 1024,
                     "height": height or 768,
-                    "prompt_upsampling": prompt_upsampling,
-                    "raw": raw_mode
+                    "prompt_upsampling": prompt_upsampling
                 })
+                print(f"DEBUG: Setting standard prompt_upsampling to {prompt_upsampling}")
+                
+                # Optional parameters for standard endpoint
                 if seed is not None and seed > 0:
                     params["seed"] = seed
                 if negative_prompt:
@@ -481,6 +549,28 @@ class ImageGenerationUI:
                         info="Include model's trigger word in prompt.",
                     )
 
+                    image_prompt = gr.Image(
+                        label="Image prompt (optional)",
+                        type="numpy",
+                        # Default type, converts to numpy array
+                        sources=["upload", "clipboard"],
+                        show_download_button=False,
+                        height=200,
+                        elem_id="image_prompt_upload"
+,
+                        # Temporarily disable the image prompt feature
+                        interactive=False
+                    )
+                    gr.Markdown(
+                        """
+                        **Image Prompt**: Upload an image to use as a visual reference.
+                        The model will blend this with your text prompt based on the
+                        "Image prompt strength" slider.
+                        """
+                        """
+                        **TEMPORARILY DISABLED**: This feature is currently unavailable due to technical issues.
+                        """
+                    )
                     negative_prompt = gr.Textbox(
                         label="Negative prompt (optional)",
                         placeholder="Enter things to avoid in the image.",
@@ -506,13 +596,30 @@ class ImageGenerationUI:
                             strength = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
-                                value=1.1,
+                                value=1.2,
                                 step=0.1,
-                                label="Model strength",
+                                label="Finetune strength",
                                 info=(
                                     "How strongly to apply model's style "
-                                    "(default: 1.1)."
+                                    "(default: 1.2)."
                                 ),
+                            )
+
+                            image_prompt_strength = gr.Slider(
+                                minimum=0.0,
+                                maximum=1.0,
+                                value=0.1,
+                                step=0.05,
+                                label="Image prompt strength",
+                                info=(
+                                    "Blend between the prompt and the image prompt (0-1)."
+                                ),
+                            )
+                            
+                            ultra_prompt_upsampling = gr.Checkbox(
+                                label="Prompt upsampling",
+                                value=False,
+                                info="Use AI to enhance the prompt (may produce more creative results)",
                             )
 
                         # Standard endpoint parameters
@@ -538,7 +645,7 @@ class ImageGenerationUI:
                             num_inference_steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
-                                value=30,
+                                value=40,
                                 step=1,
                                 label="Number of Steps",
                                 info=(
@@ -547,6 +654,16 @@ class ImageGenerationUI:
                                 ),
                             )
 
+                            strength_standard = gr.Slider(
+                                minimum=0.1,
+                                maximum=2.0,
+                                value=1.1,
+                                step=0.1,
+                                label="Finetune strength",
+                                info=(
+                                    "How strongly to apply model's style (0.1-2.0)."
+                                ),
+                            )
                             guidance_scale = gr.Slider(
                                 minimum=1.5,
                                 maximum=5.0,
@@ -557,17 +674,9 @@ class ImageGenerationUI:
                             )
 
                             prompt_upsampling = gr.Checkbox(
-                                label="Enhance prompt",
-                                info="Use AI to enhance the prompt",
-                            )
-
-                            raw_mode = gr.Checkbox(
-                                label="Raw mode",
+                                label="Prompt upsampling",
                                 value=False,
-                                info=(
-                                    "Generate less processed, "
-                                    "more natural images"
-                                ),
+                                info="Use AI to enhance the prompt (may produce more creative results)",
                             )
 
                         # Common parameters
@@ -638,6 +747,7 @@ class ImageGenerationUI:
             def toggle_endpoint_params(choice):
                 is_ultra = choice == self.ENDPOINT_ULTRA
                 is_standard = choice == self.ENDPOINT_STANDARD
+                # Update visibility of parameter sections based on endpoint
                 return [
                     gr.update(visible=is_ultra),
                     gr.update(visible=is_standard)
@@ -652,9 +762,9 @@ class ImageGenerationUI:
             # Generation inputs
             generate_inputs = [
                 endpoint, model_dropdown, prompt, negative_prompt,
-                aspect_ratio, num_inference_steps, guidance_scale, strength,
-                seed, output_format, prompt_upsampling, safety_tolerance,
-                width, height, raw_mode,
+                aspect_ratio, num_inference_steps, guidance_scale, strength, strength_standard, seed,
+                width, height, image_prompt, output_format, prompt_upsampling,
+                image_prompt_strength, ultra_prompt_upsampling, safety_tolerance
             ]
 
             generate_btn.click(

@@ -1,5 +1,5 @@
-gradio>=5.18.0
-numpy>=1.26.0
-pillow>=10.1.0
-requests>=2.31.0
+gradio>=5.20.1
+numpy>=2.2.3
+pillow>=11.1.0
+requests>=2.32.3
 python-dotenv>=1.0.1
