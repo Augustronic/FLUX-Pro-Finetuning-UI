@@ -1,8 +1,83 @@
 {
-    "api_key": "your-api-key-here",
-    "api_host": "api.us1.bfl.ai",
-    "storage": {
-        "models_dir": "data",
-        "images_dir": "generated_images"
+  "api_key": "your-api-key-here",
+  "api_host": "api.us1.bfl.ai",
+  "storage": {
+    "models_dir": "data",
+    "images_dir": "generated_images",
+    "temp_dir": "temp",
+    "logs_dir": "logs"
+  },
+  "features": {
+    "image_prompt_support": false,
+    "prompt_upsampling": true,
+    "ultra_prompt_upsampling": true,
+    "advanced_parameters": true,
+    "extended_prompts": false,
+    "extended_guidance_range": false,
+    "extended_steps": false,
+    "extended_safety_tolerance": false,
+    "high_resolution": false,
+    "experimental_endpoints": false,
+    "experimental_aspect_ratios": false,
+    "experimental_output_formats": false,
+    "experimental_model_types": true,
+    "experimental_training_modes": false,
+    "experimental_finetune_types": false,
+    "experimental_priorities": false,
+    "advanced_finetune_params": false,
+    "advanced_generation_params": false,
+    "advanced_lora_ranks": false,
+    "extended_iterations": false,
+    "extended_learning_rates": false,
+    "extended_generation_timeout": false,
+    "estimated_completion_time": false,
+    "allow_tar_files": false,
+    "allow_image_folders": false,
+    "batch_generation": false
+  },
+  "ui": {
+    "theme": "light",
+    "default_tab": "generate",
+    "show_advanced_options": false,
+    "auto_refresh_models": true,
+    "auto_refresh_interval": 60,
+    "max_recent_prompts": 10,
+    "max_recent_models": 5
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/app.log",
+    "max_size": 10485760,
+    "backup_count": 3,
+    "console": true
+  },
+  "api": {
+    "timeout": 30,
+    "max_retries": 3,
+    "retry_delay": 1,
+    "max_concurrent_requests": 5
+  },
+  "defaults": {
+    "ultra": {
+      "aspect_ratio": "16:9",
+      "strength": 1.2,
+      "safety_tolerance": 2
+    },
+    "standard": {
+      "width": 1024,
+      "height": 768,
+      "steps": 40,
+      "guidance": 2.5,
+      "strength": 1.1,
+      "safety_tolerance": 2
+    },
+    "finetune": {
+      "mode": "general",
+      "type": "lora",
+      "iterations": 300,
+      "lora_rank": 32,
+      "priority": "quality",
+      "auto_caption": true
     }
-} 
+  }
+}
