@@ -1,4 +1,4 @@
-# FLUX-Pro-Finetuning-UI Architecture
+# FLUX-Pro-Finetuning-UI Architecture & Planning
 
 ## Overview
 
@@ -209,6 +209,84 @@ api_key = container.get_config('api_key')
 storage_config = container.get_config('storage')
 ```
 
+## API Reference
+
+The application uses the BFL API for finetuning and image generation. The main endpoints are:
+
+### Finetuning Endpoints
+
+- `GET /v1/finetune_details`: Get details about a finetuned model
+  - Parameters: `finetune_id` (string, required)
+
+- `POST /v1/finetune`: Start a finetuning job
+  - Parameters:
+    - `file_data`: Base64-encoded ZIP file containing training images (string, required)
+    - `finetune_comment`: Comment or name of the fine-tuned model (string, required)
+    - `trigger_word`: Trigger word for the fine-tuned model (string, default: "TOK")
+    - `mode`: Mode for the fine-tuned model (string, enum: "general", "character", "style", "product", required)
+    - `iterations`: Number of iterations for fine-tuning (integer, min: 100, max: 1000, default: 300)
+    - `learning_rate`: Learning rate for fine-tuning (number, min: 0.000001, max: 0.005, nullable)
+    - `captioning`: Whether to enable captioning during fine-tuning (boolean, default: true)
+    - `priority`: Priority of the fine-tuning process (string, enum: "speed", "quality", default: "quality")
+    - `finetune_type`: Type of fine-tuning (string, enum: "lora", "full", default: "full")
+    - `lora_rank`: Rank of the fine-tuned model (integer, enum: 16, 32, default: 32)
+
+### Image Generation Endpoints
+
+- `POST /v1/flux-pro-finetuned`: Generate an image using a finetuned model
+- `POST /v1/flux-pro-1.1-ultra-finetuned`: Generate an image using a finetuned model with the ultra endpoint
+
+### Utility Endpoints
+
+- `GET /v1/get_result`: Get the result of a generation task
+  - Parameters: `id` (string, required)
+
+## Gradio Framework Reference
+
+The UI is built using the Gradio framework, which provides a simple way to create web interfaces for machine learning models.
+
+### Interface Class
+
+The `gr.Interface` class is the main high-level class in Gradio, allowing you to create a web-based GUI around a Python function:
+
+```python
+import gradio as gr
+
+def image_classifier(inp):
+    return {'cat': 0.3, 'dog': 0.7}
+
+demo = gr.Interface(fn=image_classifier, inputs="image", outputs="label")
+demo.launch()
+```
+
+### Key Parameters
+
+- `fn`: The function to wrap an interface around
+- `inputs`: Input components (can be strings or component objects)
+- `outputs`: Output components (can be strings or component objects)
+- `examples`: Sample inputs for the function
+- `live`: Whether the interface should automatically rerun if inputs change
+- `title`: A title for the interface
+- `description`: A description for the interface
+- `theme`: A theme object or string representing a theme
+
+### Launching the Interface
+
+```python
+demo.launch(share=True, auth=("username", "password"))
+```
+
+### Components
+
+Gradio provides various components for inputs and outputs:
+
+- Text: `gr.Textbox`, `gr.Markdown`, `gr.Label`
+- Images: `gr.Image`, `gr.Gallery`
+- Audio: `gr.Audio`
+- Video: `gr.Video`
+- Interactive: `gr.Button`, `gr.Checkbox`, `gr.Radio`, `gr.Dropdown`, `gr.Slider`
+- Data: `gr.Dataframe`, `gr.JSON`
+
 ## Extending the System
 
 ### Adding a New Service
@@ -234,7 +312,3 @@ To add a new UI component:
 1. Create a new UI class that extends BaseUI
 2. Add the component to the ServiceContainer
 3. Update the main application to include the new component
-
-## Conclusion
-
-This architecture provides a solid foundation for the FLUX-Pro-Finetuning-UI application, with clear separation of concerns, dependency injection, and modularity. By following these principles, the codebase remains maintainable, testable, and extensible as the application grows.
