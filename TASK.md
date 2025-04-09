@@ -31,6 +31,10 @@ This document tracks current and completed tasks for the FLUX-Pro-Finetuning-UI 
 
 ## Completed Tasks
 
+### Dependency Updates
+
+- [x] Update Gradio to version 5.24.0 (2025-04-09)
+
 ### Core Infrastructure
 
 - [x] Create directory structure for new architecture (2025-03-15)
