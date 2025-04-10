@@ -59,3 +59,8 @@
 - **Never hallucinate libraries or functions** – only use known, verified Python packages.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to or if part of a task from `TASK.md`.
+
+### 📚 References & API Documentation
+
+- **BFL API Scalar**: https://api.us1.bfl.ai/scalar - API documentation for BFL services
+- **Gradio Interface**: https://www.gradio.app/docs/gradio/interface - Documentation for Gradio Interface components and usage
