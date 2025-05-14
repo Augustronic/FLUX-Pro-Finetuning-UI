@@ -68,7 +68,7 @@ def get_service(self, service_name: str) -> Any:
     """Get a service by name, initializing it if necessary."""
     if service_name not in self._initialized:
         self._initialize_service(service_name)
-        
+
     return self._services[service_name]
 ```
 
@@ -111,18 +111,18 @@ The main application entry point is `app.py`, which creates the Gradio interface
 def create_app():
     # Initialize service container
     container = ServiceContainer()
-    
+
     # Create the combined interface
     with gr.Blocks(title="FLUX [pro] Finetuning UI") as demo:
         # ... UI layout ...
-        
+
         with gr.Tabs():
             with gr.Tab("Finetune Model"):
                 # Get UI component from container
                 container.get_service('finetune_ui').create_ui()
-                
+
             # ... other tabs ...
-                
+
     return demo
 ```
 

@@ -61,7 +61,7 @@ The installation steps on MacOS and Linux are similar to Windows but with some d
 
 1. **Install Python**:
    Python usually comes pre-installed on MacOS and most Linux distributions. You can verify the installation by running `python --version` in the terminal (note that depending on how Python is installed, you might have to use `python3` instead of `python` throughout these steps). 
-   
+
    Ensure you have Python 3.10 or higher installed. If you do not have it installed, you can download it from [python.org](https://www.python.org/). 
 
 2. **Create a Virtual Environment**:

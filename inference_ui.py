@@ -27,35 +27,35 @@ class ImageGenerationUI:
         """Initialize the UI with a model manager."""
         if not isinstance(model_manager, ModelManager):
             raise ValueError("Invalid model manager instance")
-            
+
         self.manager = model_manager
-        
+
         # Use images directory from constants
         self.images_dir = Paths.IMAGES_DIR
         self.images_dir.mkdir(exist_ok=True)
 
     def _format_model_choice(self, model: Any) -> str:
         """Format model metadata for dropdown display.
-        
+
         Args:
             model: Model metadata object
-            
+
         Returns:
             Formatted string for display
-            
+
         Raises:
             ValueError: If model data is invalid
         """
         if not model or not hasattr(model, 'model_name') or not hasattr(model, 'trigger_word'):
             raise ValueError("Invalid model data")
-            
+
         # Validate required attributes
         if not all([
             isinstance(getattr(model, attr, None), str)
             for attr in ['model_name', 'trigger_word', 'type', 'mode']
         ]):
             raise ValueError("Invalid model attributes")
-            
+
         # Sanitize display values
         parts = [
             f"{self._sanitize_display_text(model.model_name)}",
@@ -63,45 +63,45 @@ class ImageGenerationUI:
             f"{self._sanitize_display_text(model.type).upper()}",
             f"{self._sanitize_display_text(model.mode).capitalize()}",
         ]
-        
+
         # Add rank if present
         if hasattr(model, 'rank') and isinstance(model.rank, (int, float)):
             parts.append(f"Rank {int(model.rank)}")
-            
+
         return " - ".join(parts)
 
     def _sanitize_display_text(self, text: str) -> str:
         """Sanitize text for display in UI.
-        
+
         Args:
             text: Text to sanitize
-            
+
         Returns:
             Sanitized text
         """
         if not isinstance(text, str):
             return ""
-            
+
         # Remove control characters and limit length
         text = "".join(char for char in text if char.isprintable())
         text = text[:100]  # Limit length
-        
+
         # Only allow alphanumeric and basic punctuation
         text = re.sub(r'[^\w\s\-_.,()]', '', text)
         return text.strip()
 
     def _get_model_id_from_choice(self, choice: str) -> str:
         """Extract model ID from formatted choice string.
-        
+
         Args:
             choice: Formatted choice string from dropdown
-            
+
         Returns:
             Model ID or empty string if not found
         """
         if not isinstance(choice, str) or not choice.strip():
             return ""
-            
+
         try:
             for model in self.manager.list_models():
                 if model and self._format_model_choice(model) == choice:
@@ -134,7 +134,7 @@ class ImageGenerationUI:
         if not isinstance(output_format, str) or output_format.lower() not in ["jpeg", "png"]:
             print("Invalid output format")
             return None
-            
+
         if not self._validate_image_url(image_url):
             print("Invalid image URL format")
             return None
@@ -153,12 +153,12 @@ class ImageGenerationUI:
                     headers={"User-Agent": "FLUX-Pro-Finetuning-UI"}
                 )
                 response.raise_for_status()
-                
+
                 # Check content type
                 content_type = response.headers.get("content-type", "")
                 if not content_type.startswith("image/"):
                     raise ValueError("Invalid content type")
-                
+
                 # Read with size limit (50MB)
                 max_size = 50 * 1024 * 1024
                 content = b""
@@ -177,7 +177,7 @@ class ImageGenerationUI:
                 timestamp = time.strftime("%Y%m%d-%H%M%S")
                 filename = f"generated_image_{timestamp}.{output_format.lower()}"
                 final_path = self.images_dir / filename
-                
+
                 with open(final_path, "wb") as f:
                     f.write(image_data)
                 os.chmod(final_path, 0o600)
@@ -193,34 +193,34 @@ class ImageGenerationUI:
 
     def _convert_image_to_base64(self, image: Optional[np.ndarray], format: str = "jpeg") -> Optional[str]:
         """Convert numpy image array to base64 string.
-        
+
         Args:
             image: Numpy array of image
             format: Image format (jpeg or png)
-            
+
         Returns:
             Base64 encoded image string or None if conversion failed
         """
         if image is None:
             return None
-            
+
         try:
             # Convert numpy array to PIL Image
             pil_image = Image.fromarray(image)
-            
+
             # Save to bytes buffer
             buffer = io.BytesIO()
             pil_image.save(buffer, format=format.upper())
-            
+
             # Convert to base64
             img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            
+
             # Format as data URL
             mime_type = f"image/{format.lower()}"
             data_url = f"data:{mime_type};base64,{img_str}"
-            
+
             return data_url
-            
+
         except Exception as e:
             print(f"Error converting image to base64: {e}")
             return None
@@ -229,22 +229,22 @@ class ImageGenerationUI:
         """Validate prompt text for safety and format."""
         if not prompt or not isinstance(prompt, str):
             return False
-        
+
         # Remove excessive whitespace
         prompt = prompt.strip()
         if len(prompt) == 0:
             return False
-            
+
         # Check for valid characters
         if not re.match(r'^[\w\s\-_.,!?()[\]{}@#$%^&*+=<>:/\\|\'\"]+$', prompt):
             return False
-            
+
         # Check length
         if len(prompt) > 1000:  # Maximum prompt length
             return False
-            
+
         return True
-        
+
     def _validate_numeric_param(
         self,
         value: Optional[float],
@@ -255,7 +255,7 @@ class ImageGenerationUI:
         """Validate numeric parameter within range."""
         if value is None:
             return allow_none
-            
+
         try:
             value = float(value)
             return min_val <= value <= max_val
@@ -300,7 +300,7 @@ class ImageGenerationUI:
             seed: Random seed for reproducibility
             output_format: Output image format
             image_prompt_strength: Blend between prompt and image prompt (0-1)
- 
+
             ultra_prompt_upsampling: Whether to enhance prompt for ultra endpoint
             prompt_upsampling: Whether to enhance prompt
             safety_tolerance: Safety check level (0-6)
@@ -309,7 +309,7 @@ class ImageGenerationUI:
 
         Returns:
             Tuple of (numpy array of image or None, status message)
-            
+
         Raises:
             ValueError: If any input parameters are invalid
         """
@@ -321,7 +321,7 @@ class ImageGenerationUI:
             # Validate model selection
             if not model_choice:
                 return (None, "Error: Please select a model")
-                
+
             model_id = self._get_model_id_from_choice(model_choice)
             if not model_id:
                 return (None, "Error: Invalid model selection")
@@ -329,38 +329,38 @@ class ImageGenerationUI:
             model = self.manager.get_model(model_id)
             if not model:
                 return (None, "Error: Model not found")
-                
+
             # Validate prompt
             if not self._validate_prompt(prompt):
                 return (None, "Error: Invalid prompt format or content")
-                
+
             # Validate negative prompt if provided
             if negative_prompt and not self._validate_prompt(negative_prompt):
                 return (None, "Error: Invalid negative prompt format")
-                
+
             # Validate numeric parameters
             if not self._validate_numeric_param(strength, 0.1, 2.0, False):
                 return (None, "Error: Invalid strength value (must be between 0.1 and 2.0)")
-                
+
             if not self._validate_numeric_param(guidance_scale, 1.5, 5.0):
                 return (None, "Error: Invalid guidance scale value (must be between 1.5 and 5.0)")
-                
+
             if num_steps is not None and not self._validate_numeric_param(float(num_steps), 1, 50, False):
                 return (None, "Error: Invalid number of steps value (must be between 1 and 50)")
-                
+
             if safety_tolerance not in range(7):  # 0 to 6
                 return (None, "Error: Invalid safety tolerance value")
-                
+
             # Validate output format
             if output_format not in ["jpeg", "png"]:
                 return (None, "Error: Invalid output format")
-                
+
             # Validate aspect ratio for ultra endpoint
             if endpoint == self.ENDPOINT_ULTRA:
                 valid_ratios = ["21:9", "16:9", "3:2", "4:3", "1:1", "3:4", "2:3", "9:16", "9:21"]
                 if aspect_ratio not in valid_ratios:
                     return (None, "Error: Invalid aspect ratio")
-                    
+
             # Validate dimensions for standard endpoint
             if endpoint == self.ENDPOINT_STANDARD:
                 if width is not None and not self._validate_numeric_param(float(width), 256, 1440, False):
@@ -383,7 +383,7 @@ class ImageGenerationUI:
             # if image_prompt is not None:
             #     image_prompt_base64 = self._convert_image_to_base64(image_prompt, output_format)
             #     print(f"Image prompt converted to base64 (length: {len(image_prompt_base64) if image_prompt_base64 else 0})")
-            
+
             # Build parameters
             params = {
                 "finetune_id": model_id,
@@ -393,9 +393,9 @@ class ImageGenerationUI:
                 # Temporarily disable image prompt feature
                 # "image_prompt": image_prompt_base64,
             }
-            
+
             print(f"DEBUG: Initial common params: {params}")
-            
+
             if endpoint == self.ENDPOINT_ULTRA:
                 # Ultra endpoint parameters
                 params.update({
@@ -405,15 +405,15 @@ class ImageGenerationUI:
                     # "image_prompt_strength": image_prompt_strength
                     # Note: finetune_strength is already in common parameters
                 })
-                
+
                 # Use the ultra prompt upsampling parameter
                 params["prompt_upsampling"] = ultra_prompt_upsampling
                 print(f"DEBUG: Setting ultra prompt_upsampling to {ultra_prompt_upsampling}")
-                
+
                 # Optional parameters for ultra endpoint
                 if seed is not None and seed > 0:
                     params["seed"] = seed
-                    
+
             else:  # ENDPOINT_STANDARD
                 # Standard endpoint parameters
                 params.update({
@@ -426,7 +426,7 @@ class ImageGenerationUI:
                     "prompt_upsampling": prompt_upsampling
                 })
                 print(f"DEBUG: Setting standard prompt_upsampling to {prompt_upsampling}")
-                
+
                 # Optional parameters for standard endpoint
                 if seed is not None and seed > 0:
                     params["seed"] = seed
@@ -473,7 +473,7 @@ class ImageGenerationUI:
                     img_array = self._save_image_from_url(image_url, output_format)
                     if img_array is None:
                         return (None, "Error: Failed to save image")
-                        
+
                     return (img_array, f"Generation completed successfully! Image saved as {output_format.upper()}")
 
                 print(
@@ -615,7 +615,7 @@ class ImageGenerationUI:
                                     "Blend between the prompt and the image prompt (0-1)."
                                 ),
                             )
-                            
+
                             ultra_prompt_upsampling = gr.Checkbox(
                                 label="Prompt upsampling",
                                 value=False,

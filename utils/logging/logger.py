@@ -20,7 +20,7 @@ class AppLogger:
         backup_count: int = 5
     ):
         """Initialize logger.
-        
+
         Args:
             name: Logger name
             log_dir: Directory for log files
@@ -30,10 +30,10 @@ class AppLogger:
         """
         self.logger = logging.getLogger(name)
         self.logger.setLevel(log_level)
-        
+
         # Create logs directory if it doesn't exist
         Path(log_dir).mkdir(exist_ok=True)
-        
+
         # File handler with rotation
         log_file = Path(log_dir) / f"{name}.log"
         file_handler = RotatingFileHandler(
@@ -41,36 +41,36 @@ class AppLogger:
             maxBytes=max_size,
             backupCount=backup_count
         )
-        
+
         # Console handler
         console_handler = logging.StreamHandler(sys.stdout)
-        
+
         # Create formatters and add them to the handlers
         file_formatter = self._create_json_formatter()
         console_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        
+
         file_handler.setFormatter(file_formatter)
         console_handler.setFormatter(console_formatter)
-        
+
         # Add handlers to the logger
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
 
     def _create_json_formatter(self) -> logging.Formatter:
         """Create JSON formatter for structured logging.
-        
+
         Returns:
             Logging formatter for JSON output
         """
         class JSONFormatter(logging.Formatter):
             def format(self, record: logging.LogRecord) -> str:
                 """Format log record as JSON.
-                
+
                 Args:
                     record: Log record to format
-                    
+
                 Returns:
                     JSON formatted log string
                 """
@@ -81,11 +81,11 @@ class AppLogger:
                     "logger": record.name,
                     "message": record.getMessage(),
                 }
-                
+
                 # Add exception info if present
                 if record.exc_info:
                     log_data["exception"] = self.formatException(record.exc_info)
-                
+
                 # Add any extra attributes from the record
                 extra_attrs = {
                     key: value
@@ -98,17 +98,17 @@ class AppLogger:
                         'thread', 'threadName'
                     }
                 }
-                
+
                 if extra_attrs:
                     log_data["extra"] = extra_attrs
-                    
+
                 return json.dumps(log_data)
-                
+
         return JSONFormatter()
 
     def get_logger(self) -> logging.Logger:
         """Get configured logger instance.
-        
+
         Returns:
             Logger instance
         """
@@ -120,12 +120,12 @@ def get_logger(
     log_level: int = logging.INFO
 ) -> logging.Logger:
     """Get or create a logger instance.
-    
+
     Args:
         name: Logger name (optional)
         log_dir: Directory for log files
         log_level: Logging level
-        
+
     Returns:
         Logger instance
     """

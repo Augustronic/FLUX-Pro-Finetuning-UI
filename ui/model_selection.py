@@ -14,7 +14,7 @@ from utils.validation.validator import Validator, ValidationRule
 
 class ModelSelectionComponent(UIComponent):
     """Handles model selection and listing in the UI."""
-    
+
     def __init__(self) -> None:
         """Initialize the model selection component."""
         super().__init__()
@@ -22,7 +22,7 @@ class ModelSelectionComponent(UIComponent):
         self.logger = get_logger(__name__)
         self.error_handler = ErrorHandler(self.logger)
         self.validator = Validator()
-        
+
         # Define validation rules
         self.model_rules = [
             ValidationRule(
@@ -54,7 +54,7 @@ class ModelSelectionComponent(UIComponent):
                 message="Invalid model mode"
             )
         ]
-    
+
     def _format_model_choice(self, model: ModelMetadata) -> str:
         """Format model metadata for dropdown display."""
         try:
@@ -69,7 +69,7 @@ class ModelSelectionComponent(UIComponent):
                 self.model_rules,
                 "ModelSelectionComponent"
             )
-            
+
             # Format display values with sanitization
             parts = [
                 f"{self._sanitize_display_text(model.model_name)}",
@@ -77,13 +77,13 @@ class ModelSelectionComponent(UIComponent):
                 f"{self._sanitize_display_text(model.type).upper()}",
                 f"{self._sanitize_display_text(model.mode).capitalize()}",
             ]
-            
+
             # Add rank if present
             if hasattr(model, 'rank') and isinstance(model.rank, (int, float)):
                 parts.append(f"Rank {int(model.rank)}")
-                
+
             return " - ".join(parts)
-            
+
         except Exception as e:
             self.logger.error(
                 "Error formatting model choice",
@@ -110,15 +110,15 @@ class ModelSelectionComponent(UIComponent):
                         details={"text": str(text)}
                     )
                 )
-                
+
             # Remove control characters and limit length
             text = "".join(char for char in text if char.isprintable())
             text = text[:100]  # Limit length
-            
+
             # Only allow valid characters
             text = re.sub(r'[^' + ValidationConfig.VALID_FILENAME_CHARS[1:-1] + ']', '', text)
             return text.strip()
-            
+
         except Exception as e:
             self.logger.error(
                 "Error sanitizing display text",
@@ -137,13 +137,13 @@ class ModelSelectionComponent(UIComponent):
                         operation="_get_model_id_from_choice"
                     )
                 )
-                
+
             for model in self.manager.list_models():
                 if model and self._format_model_choice(model) == choice:
                     # Validate ID format
                     if re.match(ValidationConfig.VALID_ID_FORMAT, model.finetune_id):
                         return model.finetune_id
-                        
+
             raise ValidationError(
                 "Model not found",
                 context=ErrorContext(
@@ -152,7 +152,7 @@ class ModelSelectionComponent(UIComponent):
                     details={"choice": choice}
                 )
             )
-            
+
         except Exception as e:
             self.logger.error(
                 "Error extracting model ID",
@@ -183,17 +183,17 @@ class ModelSelectionComponent(UIComponent):
             self.manager.refresh_models()
             models = self.manager.list_models()
             choices = self._get_model_choices(models)
-            
+
             self.logger.info(
                 "Models refreshed successfully",
                 extra={"model_count": len(choices)}
             )
-            
+
             return gr.update(
                 choices=choices,
                 value=choices[0] if choices else None
             )
-            
+
         except Exception as e:
             error_response = self.error_handler.handle_error(
                 e,
@@ -211,13 +211,13 @@ class ModelSelectionComponent(UIComponent):
     def create(self, parent: Optional[gr.Blocks] = None) -> gr.Blocks:
         """Create the model selection UI elements."""
         blocks = parent or gr.Blocks()
-        
+
         try:
             with blocks:
                 # Initialize models
                 self.logger.info("Initializing model selection component")
                 models = self.manager.list_models()
-                
+
                 if not models:
                     self.logger.info("No models found, refreshing from API")
                     self.manager.refresh_models()
@@ -246,7 +246,7 @@ class ModelSelectionComponent(UIComponent):
                 # Event handlers
                 def update_dropdown():
                     return self.refresh_models()
-                    
+
                 refresh_btn.click(
                     fn=update_dropdown,
                     inputs=[],
@@ -254,7 +254,7 @@ class ModelSelectionComponent(UIComponent):
                 )
 
             return blocks
-            
+
         except Exception as e:
             error_response = self.error_handler.handle_error(
                 e,

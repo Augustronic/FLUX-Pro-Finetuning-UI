@@ -217,7 +217,7 @@ This second parameter of your chat function, `history`, will be in the same open
 The return type of your chat function does *not change* when setting `multimodal=True` (i.e. in the simplest case, you should still return a string value). We discuss more complex cases, e.g. returning files [below](#returning-complex-responses).
 
 If you are customizing a multimodal chat interface, you should pass in an instance of `gr.MultimodalTextbox` to the `textbox` parameter. You can customize the `MultimodalTextbox` further by passing in the `sources` parameter, which is a list of sources to enable. Here's an example that illustrates how to set up and customize and multimodal chat interface:
- 
+
 
 ```python
 import gradio as gr
@@ -340,7 +340,7 @@ The `gr.ChatInterface` class supports displaying intermediate thoughts or tool u
 ![](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/gradio-guides/nested-thought.png)
 
  To do this, you will need to return a `gr.ChatMessage` object from your chat function. Here is the schema of the `gr.ChatMessage` data class as well as two internal typed dictionaries:
- 
+
  ```py
 @dataclass
 class ChatMessage:
@@ -360,7 +360,7 @@ class OptionDict(TypedDict):
     label: NotRequired[str]
     value: str
  ```
- 
+
 As you can see, the `gr.ChatMessage` dataclass is similar to the openai-style message format, e.g. it has a "content" key that refers to the chat message content. But it also includes a "metadata" key whose value is a dictionary. If this dictionary includes a "title" key, the resulting message is displayed as an intermediate thought with the title being displayed on top of the thought. Here's an example showing the usage:
 
 $code_chatinterface_thoughts

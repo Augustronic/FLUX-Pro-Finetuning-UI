@@ -26,7 +26,7 @@ class ImageGenerationComponent(UIComponent):
         self.logger = get_logger(__name__)
         self.error_handler = ErrorHandler(self.logger)
         self.validator = Validator()
-        
+
         # Define validation rules
         self.generation_rules = [
             ValidationRule(
@@ -119,7 +119,7 @@ class ImageGenerationComponent(UIComponent):
                     "prompt_length": len(prompt)
                 }
             )
-            
+
             # Common parameters
             params: Dict[str, Any] = {
                 "finetune_id": model_id,
@@ -128,7 +128,7 @@ class ImageGenerationComponent(UIComponent):
                 "finetune_strength": strength,
                 "safety_tolerance": safety_tolerance,
             }
-            
+
             # Only include seed if specified
             if seed is not None:
                 params["seed"] = seed
@@ -162,7 +162,7 @@ class ImageGenerationComponent(UIComponent):
             # Start generation
             self.logger.debug("Sending generation request", extra={"params": params})
             result = self.manager.generate_image(endpoint=endpoint, **params)
-            
+
             if not result:
                 raise APIError(
                     "No response from generation API",
@@ -171,7 +171,7 @@ class ImageGenerationComponent(UIComponent):
                         operation="generate_image"
                     )
                 )
-                
+
             if isinstance(result, dict) and "detail" in result:
                 # Handle validation error response
                 validation_errors = result["detail"]
@@ -198,22 +198,22 @@ class ImageGenerationComponent(UIComponent):
                         operation="generate_image"
                     )
                 )
-                
+
             self.logger.info("Generation started", extra={"inference_id": inference_id})
 
             # Monitor generation progress
             max_attempts = 30
             attempt = 0
-            
+
             while attempt < max_attempts:
                 status = self.manager.get_generation_status(inference_id)
                 self.logger.debug(
                     "Generation status",
                     extra={"status": status, "attempt": attempt}
                 )
-                
+
                 state = status.get("status", "")
-                
+
                 # Handle all possible status values
                 if state == "Task not found":
                     raise APIError(f"Task {inference_id} not found")
@@ -228,7 +228,7 @@ class ImageGenerationComponent(UIComponent):
                     result = status.get("result", {})
                     if not result:
                         raise APIError("No result data in completed status")
-                        
+
                     image_url = result.get("sample")
                     if not image_url:
                         raise APIError("No image URL in completed status")
@@ -237,17 +237,17 @@ class ImageGenerationComponent(UIComponent):
                         # Download image
                         response = requests.get(image_url)
                         response.raise_for_status()
-                        
+
                         # Convert to PIL Image
                         image = Image.open(BytesIO(response.content))
                         self.logger.info("Image generated successfully")
-                        
+
                         # Convert to base64
                         buffered = BytesIO()
                         image.save(buffered, format=output_format.upper())
                         img_str = base64.b64encode(buffered.getvalue()).decode()
                         data_url = f"data:image/{output_format};base64,{img_str}"
-                        
+
                         return (
                             data_url,
                             "Generation completed successfully!"
@@ -268,7 +268,7 @@ class ImageGenerationComponent(UIComponent):
                         "Unexpected status state",
                         extra={"state": state}
                     )
-                
+
                 attempt += 1
 
             raise APIError(
@@ -324,14 +324,14 @@ class ImageGenerationComponent(UIComponent):
         """Format model metadata for dropdown display."""
         if not model or not hasattr(model, 'model_name') or not hasattr(model, 'trigger_word'):
             raise ValueError("Invalid model data")
-            
+
         # Validate required attributes
         if not all([
             isinstance(getattr(model, attr, None), str)
             for attr in ['model_name', 'trigger_word', 'type', 'mode']
         ]):
             raise ValueError("Invalid model attributes")
-            
+
         # Format display values
         parts = [
             model.model_name,
@@ -339,18 +339,18 @@ class ImageGenerationComponent(UIComponent):
             f"{model.type.upper()}",
             f"{model.mode.capitalize()}",
         ]
-        
+
         # Add rank if present
         if hasattr(model, 'rank') and isinstance(model.rank, (int, float)):
             parts.append(f"Rank {int(model.rank)}")
-            
+
         return " - ".join(parts)
 
     def _get_model_id_from_choice(self, choice: str) -> str:
         """Extract model ID from formatted choice string."""
         if not isinstance(choice, str) or not choice.strip():
             return ""
-            
+
         try:
             for model in self.manager.list_models():
                 if model and hasattr(model, 'finetune_id'):

@@ -16,11 +16,11 @@ from services.business.model_service import ModelService
 class FineTuneUI(BaseUI):
     """
     UI component for fine-tuning models.
-    
+
     Provides UI for fine-tuning models, including file upload, parameter configuration,
     and status checking.
     """
-    
+
     def __init__(
         self,
         finetuning_service: FinetuningService,
@@ -28,7 +28,7 @@ class FineTuneUI(BaseUI):
     ):
         """
         Initialize the fine-tuning UI component.
-        
+
         Args:
             finetuning_service: Service for fine-tuning operations
             model_service: Service for model management
@@ -39,7 +39,7 @@ class FineTuneUI(BaseUI):
         )
         self.finetuning_service = finetuning_service
         self.model_service = model_service
-    
+
     def start_finetuning(
         self,
         file,
@@ -55,7 +55,7 @@ class FineTuneUI(BaseUI):
     ) -> str:
         """
         Start the fine-tuning process.
-        
+
         Args:
             file: Uploaded file
             model_name: Name for the fine-tuned model
@@ -67,7 +67,7 @@ class FineTuneUI(BaseUI):
             learning_rate: Learning rate for training
             priority: Training priority (speed, quality, high_res_only)
             captioning: Whether to enable auto-captioning
-            
+
         Returns:
             Fine-tune ID or error message
         """
@@ -76,11 +76,11 @@ class FineTuneUI(BaseUI):
             file_path, msg = self.finetuning_service.process_upload(file, file.name)
             if not file_path:
                 return msg
-                
+
             # Validate inputs
             if not all([model_name, trigger_word]):
                 return "Model name and trigger word are required."
-                
+
             # Start fine-tuning
             result = self.finetuning_service.start_finetune(
                 file_path=file_path,
@@ -94,43 +94,43 @@ class FineTuneUI(BaseUI):
                 priority=priority,
                 auto_caption=captioning
             )
-            
+
             if not result or 'finetune_id' not in result:
                 return "Failed to start finetuning job."
-                
+
             finetune_id = result['finetune_id']
             return finetune_id
-            
+
         except FinetuningError as e:
             return f"Error starting finetuning: {str(e)}"
         except Exception as e:
             return f"Unexpected error: {str(e)}"
-    
+
     def check_status(self, finetune_id: str) -> str:
         """
         Check the status of a fine-tuning job.
-        
+
         Args:
             finetune_id: ID of the fine-tuning job
-            
+
         Returns:
             Status message
         """
         if not finetune_id:
             return "Please enter a finetune ID."
-            
+
         try:
             # Get status details
             result = self.finetuning_service.check_status(finetune_id)
             if not result:
                 return "Error checking status"
-                
+
             status = result.get('status', '')
             progress = result.get('progress', '')
             error = result.get('error', '')
             details = result.get('details', {})
             is_completed = result.get('is_completed', False)
-            
+
             # Format status message
             if status == 'Failed':
                 status_msg = f"Training failed: {error}"
@@ -171,28 +171,28 @@ class FineTuneUI(BaseUI):
                         f"\nMode: {mode}"
                         f"\nType: {ftype}"
                     )
-                    
+
             return status_msg
-            
+
         except Exception as e:
             return f"Error checking status: {str(e)}"
-    
+
     def update_learning_rate(self, finetune_type: str) -> float:
         """
         Update learning rate based on finetune type.
-        
+
         Args:
             finetune_type: Type of fine-tuning (full, lora)
-            
+
         Returns:
             Recommended learning rate
         """
         return self.finetuning_service.update_learning_rate(finetune_type)
-    
+
     def create_ui(self) -> gr.Blocks:
         """
         Create the fine-tuning UI component.
-        
+
         Returns:
             Gradio Blocks component
         """
@@ -201,7 +201,7 @@ class FineTuneUI(BaseUI):
             title_text = self.title if self.title else "Model Finetuning"
             desc_text = self.description if self.description else "Upload your training dataset and configure finetuning parameters."
             self.create_section_header(title_text, desc_text)
-            
+
             with gr.Row():
                 with gr.Column():
                     file_input = gr.File(
@@ -231,12 +231,12 @@ class FineTuneUI(BaseUI):
                             "your dataset."
                         )
                     )
-                    
+
                 with gr.Column():
                     # Update learning rate when finetune type changes
                     def on_finetune_type_change(ft_type):
                         return self.update_learning_rate(ft_type)
-                        
+
                     captioning = gr.Checkbox(
                         label="Enable auto-captioning",
                         value=True,
@@ -288,7 +288,7 @@ class FineTuneUI(BaseUI):
                         inputs=[finetune_type],
                         outputs=[learning_rate]
                     )
-                    
+
                 with gr.Column():
                     with gr.Accordion(
                         "Getting Started: Step-by-Step Guide",
@@ -313,7 +313,7 @@ improve results. Higher resolution helps but is capped at 1MP.</p>
     - Use script to submit.
 6. Run Inference
     - Use model via endpoints.""")
-                        
+
                     with gr.Accordion("Best Practices and Tips", open=False):
                         gr.Markdown("""
 1. Concept Enhancement
@@ -333,24 +333,24 @@ improve results. Higher resolution helps but is capped at 1MP.</p>
     - Prepend triggers to prompts
     - Add brief descriptions
     - Include style indicators""")
-                        
+
                     with gr.Accordion("Note on training mode", open=False):
                         gr.Markdown("""
 <p style="color: #72a914">General mode captions whole images without focus
 areas. No subject improvements.</p>""")
-                        
+
                     with gr.Accordion("Notes on learning rate", open=False):
                         gr.Markdown("""
 <p style="color: #72a914;">Lower values: better results, more iterations.
 Higher values: faster training, may reduce quality.</p>
 <p style="color: #72a914;">LoRA: use 10x larger values than Full.</p>""")
-                        
+
             # Start finetuning button
             start_btn = gr.Button(
                 "▶️ Start Finetuning",
                 variant="primary"
             )
-            
+
             # Status checking section
             with gr.Row():
                 with gr.Column():
@@ -370,7 +370,7 @@ Higher values: faster training, may reduce quality.</p>
                         label="Status",
                         interactive=False
                     )
-                    
+
             # Handle finetuning start
             start_btn.click(
                 fn=self.start_finetuning,
@@ -388,12 +388,12 @@ Higher values: faster training, may reduce quality.</p>
                 ],
                 outputs=finetune_id
             )
-            
+
             # Handle status check
             check_status_btn.click(
                 fn=self.check_status,
                 inputs=[finetune_id],
                 outputs=status_text
             )
-            
+
         return app

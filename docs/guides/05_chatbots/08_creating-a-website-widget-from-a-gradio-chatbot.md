@@ -130,25 +130,25 @@ Then, add the following JavaScript code (which uses the Gradio JavaScript Client
 ```html
 <script type="module">
     import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
-    
+
     async function initChatWidget() {
         const client = await Client.connect("https://abidlabs-gradio-playground-bot.hf.space");
-        
+
         const chatToggle = document.getElementById('chat-toggle');
         const chatContainer = document.getElementById('chat-container');
         const closeChat = document.getElementById('close-chat');
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-message');
         const messagesContainer = document.getElementById('chat-messages');
-    
+
         chatToggle.addEventListener('click', () => {
             chatContainer.classList.remove('hidden');
         });
-    
+
         closeChat.addEventListener('click', () => {
             chatContainer.classList.add('hidden');
         });
-    
+
         async function sendMessage() {
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
@@ -169,27 +169,27 @@ Then, add the following JavaScript code (which uses the Gradio JavaScript Client
                 appendMessage('Sorry, there was an error processing your request.', 'bot');
             }
         }
-    
+
         function appendMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
-            
+
             if (sender === 'bot') {
                 messageDiv.innerHTML = marked.parse(text);
             } else {
                 messageDiv.textContent = text;
             }
-            
+
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-    
+
         sendButton.addEventListener('click', sendMessage);
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
     }
-    
+
     initChatWidget();
 </script>
 ```

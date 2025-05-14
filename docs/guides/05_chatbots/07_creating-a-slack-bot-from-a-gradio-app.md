@@ -97,7 +97,7 @@ def handle_app_mention_events(body, say):
     text = body["event"]["text"]
     bot_user_id = body["authorizations"][0]["user_id"]
     clean_message = text.replace(f"<@{bot_user_id}>", "").strip()
-    
+
     # Handle images if present
     files = []
     if "files" in body["event"]:
@@ -106,7 +106,7 @@ def handle_app_mention_events(body, say):
                 image_path = download_image(file["url_private_download"], file["name"])
                 files.append(handle_file(image_path))
                 break
-    
+
     # Submit to Gradio and send responses back to Slack
     for response in gradio_client.submit(
         message={"text": clean_message, "files": files},

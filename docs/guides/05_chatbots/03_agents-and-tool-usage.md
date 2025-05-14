@@ -240,12 +240,12 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
     """
     # Initialize response from Gemini
     response = model.generate_content(user_message, stream=True)
-    
+
     # Initialize buffers
     thought_buffer = ""
     response_buffer = ""
     thinking_complete = False
-    
+
     # Add initial thinking message
     messages.append(
         ChatMessage(
@@ -254,11 +254,11 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
             metadata={"title": "⏳Thinking: *The thoughts produced by the Gemini2.0 Flash model are experimental"}
         )
     )
-    
+
     for chunk in response:
         parts = chunk.candidates[0].content.parts
         current_chunk = parts[0].text
-        
+
         if len(parts) == 2 and not thinking_complete:
             # Complete thought and start response
             thought_buffer += current_chunk
@@ -267,7 +267,7 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
                 content=thought_buffer,
                 metadata={"title": "⏳Thinking: *The thoughts produced by the Gemini2.0 Flash model are experimental"}
             )
-            
+
             # Add response message
             messages.append(
                 ChatMessage(
@@ -276,7 +276,7 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
                 )
             )
             thinking_complete = True
-            
+
         elif thinking_complete:
             # Continue streaming response
             response_buffer += current_chunk
@@ -284,7 +284,7 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
                 role="assistant",
                 content=response_buffer
             )
-            
+
         else:
             # Continue streaming thoughts
             thought_buffer += current_chunk
@@ -293,7 +293,7 @@ def stream_gemini_response(user_message: str, messages: list) -> Iterator[list]:
                 content=thought_buffer,
                 metadata={"title": "⏳Thinking: *The thoughts produced by the Gemini2.0 Flash model are experimental"}
             )
-        
+
         yield messages
 ```
 
@@ -302,22 +302,22 @@ Then, let's create the Gradio interface:
 ```python
 with gr.Blocks() as demo:
     gr.Markdown("# Chat with Gemini 2.0 Flash and See its Thoughts 💭")
-    
+
     chatbot = gr.Chatbot(
         type="messages",
         label="Gemini2.0 'Thinking' Chatbot",
         render_markdown=True,
     )
-    
+
     input_box = gr.Textbox(
         lines=1,
         label="Chat Message",
         placeholder="Type your message here and press Enter..."
     )
-    
+
     # Set up event handlers
     msg_store = gr.State("")  # Store for preserving user message
-    
+
     input_box.submit(
         lambda msg: (msg, msg, ""),  # Store message and clear input
         inputs=[input_box],
@@ -383,15 +383,15 @@ def format_message_history(
 ) -> List[Dict]:
     """Convert Gradio chat history to Anthropic message format."""
     formatted_messages = []
-    
+
     # Add previous messages
     for msg in history[:-1]:
         if msg["role"] == "user":
             formatted_messages.append({"role": "user", "content": msg["content"]})
-    
+
     # Prepare the latest message with document
     latest_message = {"role": "user", "content": []}
-    
+
     if enable_citations:
         if doc_type == "plain_text":
             latest_message["content"].append({
@@ -417,10 +417,10 @@ def format_message_history(
                     "title": pdf_file.name,
                     "citations": {"enabled": True}
                 })
-    
+
     # Add the user's question
     latest_message["content"].append({"type": "text", "text": history[-1]["content"]})
-    
+
     formatted_messages.append(latest_message)
     return formatted_messages
 ```
@@ -438,11 +438,11 @@ def bot_response(
     try:
         messages = format_message_history(history, enable_citations, doc_type, text_input, pdf_file)
         response = client.messages.create(model="claude-3-5-sonnet-20241022", max_tokens=1024, messages=messages)
-        
+
         # Initialize main response and citations
         main_response = ""
         citations = []
-        
+
         # Process each content block
         for block in response.content:
             if block.type == "text":
@@ -451,10 +451,10 @@ def bot_response(
                     for citation in block.citations:
                         if citation.cited_text not in citations:
                             citations.append(citation.cited_text)
-        
+
         # Add main response
         history.append({"role": "assistant", "content": main_response})
-        
+
         # Add citations in a collapsible section
         if enable_citations and citations:
             history.append({
@@ -462,9 +462,9 @@ def bot_response(
                 "content": "\n".join([f"• {cite}" for cite in citations]),
                 "metadata": {"title": "📚 Citations"}
             })
-        
+
         return history
-            
+
     except Exception as e:
         history.append({
             "role": "assistant",
@@ -478,18 +478,18 @@ Finally, let's create the Gradio interface:
 ```python
 with gr.Blocks() as demo:
     gr.Markdown("# Chat with Citations")
-    
+
     with gr.Row(scale=1):
         with gr.Column(scale=4):
             chatbot = gr.Chatbot(type="messages", bubble_full_width=False, show_label=False, scale=1)
             msg = gr.Textbox(placeholder="Enter your message here...", show_label=False, container=False)
-            
+
         with gr.Column(scale=1):
             enable_citations = gr.Checkbox(label="Enable Citations", value=True, info="Toggle citation functionality" )
             doc_type_radio = gr.Radio( choices=["plain_text", "pdf"], value="plain_text", label="Document Type", info="Choose the type of document to use")
             text_input = gr.Textbox(label="Document Content", lines=10, info="Enter the text you want to reference")
             pdf_input = gr.File(label="Upload PDF", file_types=[".pdf"], file_count="single", visible=False)
-    
+
     # Handle message submission
     msg.submit(
         user_message,

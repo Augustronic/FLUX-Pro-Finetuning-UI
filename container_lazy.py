@@ -32,28 +32,28 @@ from ui.inference_ui_enhanced import InferenceUI
 class ServiceContainer:
     """
     Container for services with dependency injection and lazy loading.
-    
+
     Initializes services on-demand to reduce startup time and memory usage.
     """
-    
+
     def __init__(self):
         """Initialize the service container."""
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing service container")
-        
+
         # Service registry
         self._services: Dict[str, Any] = {}
         self._initialized: Set[str] = set()
-        
+
         self.logger.info("Service container initialized")
-    
+
     def _initialize_service(self, service_name: str) -> None:
         """
         Initialize a service by name.
-        
+
         Args:
             service_name: Name of the service to initialize
-            
+
         Raises:
             ValueError: If service initialization fails
         """
@@ -139,40 +139,40 @@ class ServiceContainer:
                 )
             else:
                 raise ValueError(f"Unknown service: {service_name}")
-                
+
             self._initialized.add(service_name)
             self.logger.info(f"Service initialized: {service_name}")
-            
+
         except Exception as e:
             self.logger.error(f"Error initializing service {service_name}: {e}")
             raise ValueError(f"Failed to initialize service {service_name}: {e}")
-    
+
     def get_service(self, service_name: str) -> Any:
         """
         Get a service by name, initializing it if necessary.
-        
+
         Args:
             service_name: Name of the service to retrieve
-            
+
         Returns:
             Service instance
-            
+
         Raises:
             ValueError: If service is not found or initialization fails
         """
         if service_name not in self._initialized:
             self._initialize_service(service_name)
-            
+
         return self._services[service_name]
-    
+
     def get_config(self, key: str, default: Any = None) -> Any:
         """
         Get a configuration value.
-        
+
         Args:
             key: Configuration key
             default: Default value if key is not found
-            
+
         Returns:
             Configuration value
         """

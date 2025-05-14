@@ -39,7 +39,7 @@ styler = df.style.highlight_max(color = 'lightgreen', axis = 0)
 # Displaying the styled dataframe in Gradio
 with gr.Blocks() as demo:
     gr.DataFrame(styler)
-    
+
 demo.launch()
 ```
 
@@ -76,7 +76,7 @@ import gradio as gr
 
 with gr.Blocks() as demo:
     gr.Dataframe(styler)
-    
+
 demo.launch()
 ```
 
@@ -114,7 +114,7 @@ s = df.style.apply(highlight_cols, axis = None)
 # Displaying the styled dataframe in Gradio
 with gr.Blocks() as demo:
     gr.DataFrame(s)
-    
+
 demo.launch()
 ```
 
@@ -143,7 +143,7 @@ s = df.style.format("{:.2f}")
 # Displaying the styled dataframe in Gradio
 with gr.Blocks() as demo:
     gr.DataFrame(s)
-    
+
 demo.launch()
 ```
 

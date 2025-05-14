@@ -113,7 +113,7 @@ async def on_message(message):
                     image_path = download_image(attachment)
                     files.append(handle_file(image_path))
                     break
-        
+
         # Stream the responses to the channel
         for response in gradio_client.submit(
             message={"text": clean_message, "files": files},

@@ -46,10 +46,10 @@ class ConfigError(AppError):
 
 class ErrorHandler:
     """Centralized error handling utility."""
-    
+
     def __init__(self, logger: Optional[logging.Logger] = None):
         """Initialize error handler.
-        
+
         Args:
             logger: Optional logger instance
         """
@@ -62,12 +62,12 @@ class ErrorHandler:
         error_type: Optional[Type[AppError]] = None
     ) -> Dict[str, Any]:
         """Handle an error and return appropriate response.
-        
+
         Args:
             error: The exception to handle
             context: Optional error context
             error_type: Optional specific error type to use
-            
+
         Returns:
             Dict containing error details
         """
@@ -99,12 +99,12 @@ class ErrorHandler:
 
     def _log_error(self, error: AppError) -> None:
         """Log error with appropriate severity.
-        
+
         Args:
             error: The error to log
         """
         log_message = self._format_error_message(error)
-        
+
         if error.severity == ErrorSeverity.CRITICAL:
             self.logger.critical(log_message, exc_info=True)
         elif error.severity == ErrorSeverity.ERROR:
@@ -116,22 +116,22 @@ class ErrorHandler:
 
     def _format_error_message(self, error: AppError) -> str:
         """Format error message with context.
-        
+
         Args:
             error: The error to format
-            
+
         Returns:
             Formatted error message
         """
         message_parts = [f"Error: {error.message}"]
-        
+
         if error.context:
             message_parts.extend([
                 f"Component: {error.context.component}",
                 f"Operation: {error.context.operation}"
             ])
-            
+
             if error.context.details:
                 message_parts.append(f"Details: {error.context.details}")
-                
+
         return " | ".join(message_parts)

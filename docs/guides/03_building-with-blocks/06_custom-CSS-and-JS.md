@@ -65,7 +65,7 @@ $demo_blocks_js_load
 Note: You can also supply your custom js code as a file path. For example, if you have a file called `custom.js` in the same directory as your Python script, you can add it to your demo like so: `with gr.Blocks(js="custom.js") as demo:`. Same goes for `Interface` (ex: `gr.Interface(..., js="custom.js")`).
 
 2. When using `Blocks` and event listeners, events have a `js` argument that can take a JavaScript function as a string and treat it just like a Python event listener function. You can pass both a JavaScript function and a Python function (in which case the JavaScript function is run first) or only Javascript (and set the Python `fn` to `None`). Take a look at the code below:
-   
+
 $code_blocks_js_methods
 $demo_blocks_js_methods
 
@@ -117,6 +117,6 @@ with gr.Blocks(head=shortcut_js) as demo:
     action_button = gr.Button(value="Name", elem_id="my_btn")
     textbox = gr.Textbox()
     action_button.click(lambda : "button pressed", None, textbox)
-    
+
 demo.launch()
 ```

@@ -27,30 +27,30 @@ class ParameterConfigComponent(UIComponent):
 
     def _validate_prompt(self, prompt: str) -> bool:
         """Validate prompt text for safety and format.
-        
+
         Args:
             prompt: Text to validate
-            
+
         Returns:
             True if valid, False otherwise
         """
         if not prompt or not isinstance(prompt, str):
             return False
-        
+
         # Remove excessive whitespace
         prompt = prompt.strip()
         if len(prompt) == 0 or len(prompt) > VC.MAX_PROMPT_LENGTH:
             return False
-            
+
         # Check for valid characters
         return bool(PROMPT_PATTERN.match(prompt))
 
     def create(self, parent: Optional[gr.Blocks] = None) -> gr.Blocks:
         """Create the parameter configuration UI elements.
-        
+
         Args:
             parent: Optional parent Blocks instance
-            
+
         Returns:
             The created Gradio Blocks interface
         """
@@ -186,10 +186,10 @@ class ParameterConfigComponent(UIComponent):
 
     def toggle_endpoint_params(self, endpoint: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Toggle visibility of endpoint-specific parameters.
-        
+
         Args:
             endpoint: Selected endpoint
-            
+
         Returns:
             Updates for ultra and standard parameter visibility
         """
@@ -201,7 +201,7 @@ class ParameterConfigComponent(UIComponent):
 
     def get_parameters(self) -> Dict[str, Any]:
         """Get current parameter values.
-        
+
         Returns:
             Dictionary of parameter values
         """

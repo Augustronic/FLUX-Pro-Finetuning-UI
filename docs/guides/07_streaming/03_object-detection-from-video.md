@@ -95,7 +95,7 @@ def stream_object_detection(video, conf_threshold):
                 outputs,
                 target_sizes=torch.tensor([(height, width)] * len(batch)),
                 threshold=conf_threshold)
-            
+
             for i, (array, box) in enumerate(zip(batch, boxes)):
                 pil_image = draw_bounding_boxes(Image.fromarray(array), box, model, conf_threshold)
                 frame = np.array(pil_image)

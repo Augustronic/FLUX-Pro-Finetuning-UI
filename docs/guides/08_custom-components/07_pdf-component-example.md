@@ -92,7 +92,7 @@ Run the `dev` command to launch the development server.
 This will open the demo in `demo/app.py` in an environment where changes to the `frontend` and `backend` directories will reflect instantaneously in the launched app.
 
 After launching the dev server, you should see a link printed to your console that says `Frontend Server (Go here): ... `.
- 
+
 ![](https://gradio-builds.s3.amazonaws.com/assets/pdf-guide/dev_server_terminal.png)
 
 You should see the following:
@@ -375,9 +375,9 @@ Now we will run these functions whenever the `Upload` component uploads a file a
 
 ```svelte
     <ModifyUpload i18n={gradio.i18n} on:clear={handle_clear} absolute />
-    
+
     ...
-    
+
     <Upload
         on:load={handle_upload}
         filetype={"application/pdf"}
@@ -440,7 +440,7 @@ Now we will add them underneath the canvas in a separate `<div>`
             ➡️
         </BaseButton>
     </div>
-    
+
     ...
 
 <style>
@@ -476,7 +476,7 @@ To do so, we're going to add some of the pdf rendering logic in `Index.svelte` t
 	export let selected = false;
 	import pdfjsLib from "pdfjs-dist";
 	pdfjsLib.GlobalWorkerOptions.workerSrc =  "https://cdn.bootcss.com/pdf.js/3.11.174/pdf.worker.js";
-	
+
 	let pdfDoc;
 	let canvasRef;
 
@@ -491,9 +491,9 @@ To do so, we're going to add some of the pdf rendering logic in `Index.svelte` t
 			pdfDoc.getPage(1).then(page => {
 				const ctx  = canvasRef.getContext('2d')
 				ctx.clearRect(0, 0, canvasRef.width, canvasRef.height);
-				
+
 				const viewport = page.getViewport({ scale: 0.2 });
-				
+
 				const renderContext = {
 					canvasContext: ctx,
 					viewport
@@ -503,7 +503,7 @@ To do so, we're going to add some of the pdf rendering logic in `Index.svelte` t
 				page.render(renderContext);
 			});
 		}
-	
+
 	$: get_doc(value);
 </script>
 

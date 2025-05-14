@@ -106,10 +106,10 @@ This function opens the audio file and sends it to Groq’s Whisper model for tr
 def process_whisper_response(completion):
     """
     Process Whisper transcription response and return text or null based on no_speech_prob
-    
+
     Args:
         completion: Whisper transcription response object
-        
+
     Returns:
         str or None: Transcribed text if no_speech_prob <= 0.7, otherwise None
     """
@@ -119,9 +119,9 @@ def process_whisper_response(completion):
 
         if no_speech_prob > 0.7:
             return None
-            
+
         return completion.text.strip()
-    
+
     return None
 ```
 
@@ -175,7 +175,7 @@ async function main() {
     console.log("vad loaded");
     var record = document.querySelector('.record-button');
     record.textContent = "Just Start Talking!"
-    
+
     const myvad = await vad.MicVAD.new({
       onSpeechStart: () => {
         var record = document.querySelector('.record-button');

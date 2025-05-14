@@ -16,15 +16,15 @@ from services.business.model_service import ModelService
 class InferenceUI(BaseUI):
     """
     UI component for generating images with fine-tuned models.
-    
+
     Provides UI for generating images with fine-tuned models, including
     parameter configuration and result display.
     """
-    
+
     # API endpoints
     ENDPOINT_ULTRA = "flux-pro-1.1-ultra-finetuned"
     ENDPOINT_STANDARD = "flux-pro-finetuned"
-    
+
     def __init__(
         self,
         inference_service: InferenceService,
@@ -32,7 +32,7 @@ class InferenceUI(BaseUI):
     ):
         """
         Initialize the inference UI component.
-        
+
         Args:
             inference_service: Service for inference operations
             model_service: Service for model management
@@ -43,7 +43,7 @@ class InferenceUI(BaseUI):
         )
         self.inference_service = inference_service
         self.model_service = model_service
-    
+
     def generate_image(
         self,
         endpoint: str,
@@ -67,7 +67,7 @@ class InferenceUI(BaseUI):
     ) -> Tuple[Optional[np.ndarray], str]:
         """
         Generate an image using the selected model and parameters.
-        
+
         Args:
             endpoint: API endpoint to use
             model_choice: Selected model from dropdown
@@ -87,7 +87,7 @@ class InferenceUI(BaseUI):
             image_prompt_strength: Blend between prompt and image prompt (0-1)
             ultra_prompt_upsampling: Whether to enhance prompt for ultra endpoint
             safety_tolerance: Safety check level (0-6)
-            
+
         Returns:
             Tuple of (numpy array of image or None, status message)
         """
@@ -96,7 +96,7 @@ class InferenceUI(BaseUI):
             model_id = self._get_model_id_from_choice(model_choice)
             if not model_id:
                 return None, "Error: Invalid model selection"
-                
+
             # Generate image
             return self.inference_service.generate_image(
                 endpoint=endpoint,
@@ -118,23 +118,23 @@ class InferenceUI(BaseUI):
                 ultra_prompt_upsampling=ultra_prompt_upsampling,
                 safety_tolerance=safety_tolerance
             )
-            
+
         except Exception as e:
             return None, f"Error generating image: {str(e)}"
-    
+
     def _get_model_id_from_choice(self, choice: str) -> str:
         """
         Extract model ID from formatted choice string.
-        
+
         Args:
             choice: Formatted choice string from dropdown
-            
+
         Returns:
             Model ID or empty string if not found
         """
         if not choice or not isinstance(choice, str):
             return ""
-            
+
         try:
             for model in self.model_service.list_models():
                 if model and self.model_service.format_model_choice(model) == choice:
@@ -143,11 +143,11 @@ class InferenceUI(BaseUI):
         except Exception as e:
             print(f"Error extracting model ID: {e}")
             return ""
-    
+
     def create_ui(self) -> gr.Blocks:
         """
         Create the inference UI component.
-        
+
         Returns:
             Gradio Blocks component
         """
@@ -156,14 +156,14 @@ class InferenceUI(BaseUI):
             title_text = self.title if self.title else "Image Generation"
             desc_text = self.description if self.description else "Generate images using your finetuned models."
             self.create_section_header(title_text, desc_text)
-            
+
             # Important note
             gr.Markdown(
                 """
                 **Important**: Include the model's trigger word in your prompt!
                 """
             )
-            
+
             with gr.Row():
                 with gr.Column():
                     # Endpoint selection
@@ -176,10 +176,10 @@ class InferenceUI(BaseUI):
                         label="Generation endpoint",
                         info="Select the generation endpoint to use.",
                     )
-                    
+
                     # Model selection
                     model_choices = self.inference_service.get_model_choices()
-                    
+
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
@@ -191,7 +191,7 @@ class InferenceUI(BaseUI):
                             )
                         )
                         refresh_btn = gr.Button("🔄 Refresh models")
-                        
+
                     prompt = gr.Textbox(
                         label="Prompt",
                         placeholder=(
@@ -200,7 +200,7 @@ class InferenceUI(BaseUI):
                         lines=3,
                         info="Include model's trigger word in prompt.",
                     )
-                    
+
                     image_prompt = gr.Image(
                         label="Image prompt (optional)",
                         type="numpy",
@@ -215,7 +215,7 @@ class InferenceUI(BaseUI):
                         **Image Prompt**: Upload an image to use as a visual reference.
                         The model will blend this with your text prompt based on the
                         "Image prompt strength" slider.
-                        
+
                         **TEMPORARILY DISABLED**: This feature is currently unavailable due to technical issues.
                         """
                     )
@@ -224,11 +224,11 @@ class InferenceUI(BaseUI):
                         placeholder="Enter things to avoid in the image.",
                         lines=2,
                     )
-                    
+
                 with gr.Column():
                     with gr.Group():
                         gr.Markdown("### Image parameters")
-                        
+
                         # Ultra endpoint parameters
                         with gr.Column(visible=True) as ultra_params:
                             aspect_ratio = gr.Radio(
@@ -240,7 +240,7 @@ class InferenceUI(BaseUI):
                                 label="Aspect ratio",
                                 info="Select image dimensions ratio.",
                             )
-                            
+
                             strength = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
@@ -252,7 +252,7 @@ class InferenceUI(BaseUI):
                                     "(default: 1.2)."
                                 ),
                             )
-                            
+
                             image_prompt_strength = gr.Slider(
                                 minimum=0.0,
                                 maximum=1.0,
@@ -263,13 +263,13 @@ class InferenceUI(BaseUI):
                                     "Blend between the prompt and the image prompt (0-1)."
                                 ),
                             )
-                            
+
                             ultra_prompt_upsampling = gr.Checkbox(
                                 label="Prompt upsampling",
                                 value=False,
                                 info="Use AI to enhance the prompt (may produce more creative results)",
                             )
-                            
+
                         # Standard endpoint parameters
                         with gr.Column(visible=False) as standard_params:
                             with gr.Row():
@@ -289,7 +289,7 @@ class InferenceUI(BaseUI):
                                     label="Height",
                                     info="Must be a multiple of 32",
                                 )
-                                
+
                             num_inference_steps = gr.Slider(
                                 minimum=1,
                                 maximum=50,
@@ -301,7 +301,7 @@ class InferenceUI(BaseUI):
                                     "(quality vs speed)"
                                 ),
                             )
-                            
+
                             strength_standard = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
@@ -320,13 +320,13 @@ class InferenceUI(BaseUI):
                                 label="Guidance Scale",
                                 info="Controls prompt adherence strength (1.5 to 5.0)",
                             )
-                            
+
                             prompt_upsampling = gr.Checkbox(
                                 label="Prompt upsampling",
                                 value=False,
                                 info="Use AI to enhance the prompt (may produce more creative results)",
                             )
-                            
+
                         # Common parameters
                         seed = gr.Number(
                             label="Seed",
@@ -339,7 +339,7 @@ class InferenceUI(BaseUI):
                                 "value for reproducible results."
                             ),
                         )
-                        
+
                         safety_tolerance = gr.Slider(
                             minimum=0,
                             maximum=6,
@@ -348,14 +348,14 @@ class InferenceUI(BaseUI):
                             label="Safety tolerance",
                             info="0 (most strict) to 6 (least strict).",
                         )
-                        
+
                         output_format = gr.Radio(
                             choices=["jpeg", "png"],
                             value="jpeg",
                             label="Output format",
                             info="Select image format.",
                         )
-                        
+
             # Output section
             with gr.Row():
                 with gr.Column():
@@ -365,7 +365,7 @@ class InferenceUI(BaseUI):
                     status_text = gr.Textbox(
                         label="Status", interactive=False
                     )
-                    
+
                 with gr.Column():
                     output_image = gr.Image(
                         label="Generated Image",
@@ -373,19 +373,19 @@ class InferenceUI(BaseUI):
                         interactive=False,
                         show_download_button=True
                     )
-                    
+
             # Event handlers
             def refresh_models():
                 self.model_service.refresh_models()
                 choices = self.inference_service.get_model_choices()
                 return gr.update(choices=choices, value=choices[0] if choices else None)
-                
+
             refresh_btn.click(
                 fn=refresh_models,
                 inputs=[],
                 outputs=[model_dropdown]
             )
-            
+
             def toggle_endpoint_params(choice):
                 is_ultra = choice == self.ENDPOINT_ULTRA
                 is_standard = choice == self.ENDPOINT_STANDARD
@@ -394,13 +394,13 @@ class InferenceUI(BaseUI):
                     gr.update(visible=is_ultra),
                     gr.update(visible=is_standard)
                 ]
-                
+
             endpoint.change(
                 fn=toggle_endpoint_params,
                 inputs=[endpoint],
                 outputs=[ultra_params, standard_params]
             )
-            
+
             # Generation inputs
             generate_inputs = [
                 endpoint, model_dropdown, prompt, negative_prompt,
@@ -408,11 +408,11 @@ class InferenceUI(BaseUI):
                 width, height, image_prompt, output_format, prompt_upsampling,
                 image_prompt_strength, ultra_prompt_upsampling, safety_tolerance
             ]
-            
+
             generate_btn.click(
                 fn=self.generate_image,
                 inputs=generate_inputs,
                 outputs=[output_image, status_text],
             )
-            
+
         return app

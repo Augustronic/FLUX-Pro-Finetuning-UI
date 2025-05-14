@@ -29,10 +29,10 @@ class ImageGenerator:
 
     def _format_endpoint(self, endpoint: str) -> str:
         """Format endpoint string for URL path.
-        
+
         Args:
             endpoint: Raw endpoint string
-            
+
         Returns:
             Formatted endpoint string
         """
@@ -86,7 +86,7 @@ class ImageGenerator:
             print(f"\nRequesting image generation with prompt: {prompt}")
             # Format endpoint for URL path
             formatted_endpoint = self._format_endpoint(endpoint)
-            
+
             conn.request(
                 "POST",
                 f"/v1/{formatted_endpoint}",

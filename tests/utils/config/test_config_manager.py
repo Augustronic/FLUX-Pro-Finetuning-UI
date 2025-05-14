@@ -15,10 +15,10 @@ class TestConfigManager(unittest.TestCase):
         self.test_config_dir = "test_config"
         self.config_path = Path(self.test_config_dir) / "config.json"
         self.env_config_path = Path(self.test_config_dir) / "config.test.json"
-        
+
         # Create test directory
         Path(self.test_config_dir).mkdir(exist_ok=True)
-        
+
         # Sample valid configuration
         self.valid_config = {
             "api_key": "test_api_key",
@@ -49,7 +49,7 @@ class TestConfigManager(unittest.TestCase):
         """Clean up test fixtures."""
         if Path(self.test_config_dir).exists():
             shutil.rmtree(self.test_config_dir)
-        
+
         # Clear any environment variables we set
         for key in list(os.environ.keys()):
             if key.startswith("FLUX_"):
@@ -63,13 +63,13 @@ class TestConfigManager(unittest.TestCase):
     def test_load_valid_config(self):
         """Test loading valid configuration."""
         self._write_config(self.valid_config, self.config_path)
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         self.assertEqual(
             config_manager.get("api_key"),
             self.valid_config["api_key"]
@@ -84,31 +84,31 @@ class TestConfigManager(unittest.TestCase):
         base_config = self.valid_config.copy()
         env_config = self.valid_config.copy()
         env_config["api_key"] = "test_env_api_key"
-        
+
         self._write_config(base_config, self.config_path)
         self._write_config(env_config, self.env_config_path)
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         self.assertEqual(config_manager.get("api_key"), "test_env_api_key")
 
     def test_environment_variable_override(self):
         """Test environment variable override."""
         self._write_config(self.valid_config, self.config_path)
-        
+
         # Set environment variable
         os.environ["FLUX_API_KEY"] = "env_var_api_key"
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         self.assertEqual(config_manager.get("api_key"), "env_var_api_key")
 
     def test_invalid_config_validation(self):
@@ -116,28 +116,28 @@ class TestConfigManager(unittest.TestCase):
         invalid_configs = [
             # Missing required field
             {k: v for k, v in self.valid_config.items() if k != "api_key"},
-            
+
             # Invalid API endpoint
             {
                 **self.valid_config,
                 "api_endpoint": "invalid-url"
             },
-            
+
             # Invalid type for model_defaults
             {
                 **self.valid_config,
                 "model_defaults": "invalid"
             }
         ]
-        
+
         for invalid_config in invalid_configs:
             self._write_config(invalid_config, self.config_path)
-            
+
             config_manager = ConfigManager(
                 config_path=str(self.config_path),
                 env="test"
             )
-            
+
             with self.assertRaises(ConfigError):
                 config_manager.load_config()
 
@@ -147,20 +147,20 @@ class TestConfigManager(unittest.TestCase):
             config_path="nonexistent.json",
             env="test"
         )
-        
+
         with self.assertRaises(ConfigError):
             config_manager.load_config()
 
     def test_get_with_default(self):
         """Test get with default value."""
         self._write_config(self.valid_config, self.config_path)
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         self.assertEqual(
             config_manager.get("nonexistent", "default"),
             "default"
@@ -174,16 +174,16 @@ class TestConfigManager(unittest.TestCase):
                 "steps": 50
             }
         }
-        
+
         self._write_config(base_config, self.config_path)
         self._write_config(env_config, self.env_config_path)
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         self.assertEqual(
             config_manager.get("model_defaults")["steps"],
             50
@@ -196,19 +196,19 @@ class TestConfigManager(unittest.TestCase):
     def test_json_environment_variable(self):
         """Test JSON parsing in environment variables."""
         self._write_config(self.valid_config, self.config_path)
-        
+
         # Set JSON environment variable
         os.environ["FLUX_MODEL_DEFAULTS"] = json.dumps({
             "steps": 60,
             "guidance": 3.0
         })
-        
+
         config_manager = ConfigManager(
             config_path=str(self.config_path),
             env="test"
         )
         config_manager.load_config()
-        
+
         model_defaults = config_manager.get("model_defaults")
         self.assertEqual(model_defaults["steps"], 60)
         self.assertEqual(model_defaults["guidance"], 3.0)
@@ -217,7 +217,7 @@ class TestConfigManager(unittest.TestCase):
         """Test getting configuration schema."""
         config_manager = ConfigManager()
         schema = config_manager.get_schema()
-        
+
         required_keys = [
             "api_key",
             "api_endpoint",
@@ -226,7 +226,7 @@ class TestConfigManager(unittest.TestCase):
             "performance",
             "security"
         ]
-        
+
         for key in required_keys:
             self.assertIn(key, schema)
 

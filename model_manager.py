@@ -29,44 +29,44 @@ class ModelMetadata:
         """Validate input data for model metadata."""
         if not all(isinstance(data.get(k), str) for k in ['finetune_id', 'model_name', 'trigger_word', 'mode', 'type']):
             return False
-        
+
         # Validate finetune_id format (alphanumeric with hyphens)
         if not re.match(r'^[a-zA-Z0-9-]+$', data['finetune_id']):
             return False
-        
+
         # Validate model_name (alphanumeric with basic punctuation)
         if not re.match(r'^[\w\s\-_.]+$', data['model_name']):
             return False
-        
+
         # Validate trigger_word (alphanumeric with basic punctuation)
         if not re.match(r'^[\w\s\-_.]+$', data['trigger_word']):
             return False
-        
+
         # Validate mode is one of the allowed values
         if data['mode'] not in ['general', 'character', 'style', 'product']:
             return False
-        
+
         # Validate type is either 'lora' or 'full'
         if data['type'] not in ['lora', 'full']:
             return False
-        
+
         return True
 
 
 class ModelManager:
     def __init__(self, api_key: str, host: str = "api.us1.bfl.ai"):
         """Initialize ModelManager with API key and host.
-        
+
         Args:
             api_key: API key for authentication
             host: API host domain
-            
+
         Raises:
             ValueError: If api_key is invalid or empty
         """
         if not api_key or not isinstance(api_key, str) or len(api_key.strip()) == 0:
             raise ValueError("Invalid API key")
-        
+
         if not re.match(r'^[\w.-]+\.[a-zA-Z]{2,}$', host):
             raise ValueError("Invalid host format")
 
@@ -98,7 +98,7 @@ class ModelManager:
             if self.models_file.exists():
                 # Ensure file permissions are secure
                 os.chmod(self.models_file, 0o600)  # Only owner can read/write
-                
+
                 with open(self.models_file, "r") as f:
                     data = json.load(f)
                     print(f"Loading {len(data)} models from {self.models_file}")
@@ -108,7 +108,7 @@ class ModelManager:
                             if not ModelMetadata.validate_input(item):
                                 print(f"Skipping invalid model data: {item}")
                                 continue
-                            
+
                             model = ModelMetadata(**item)
                             self.models[item["finetune_id"]] = model
                         except Exception as e:
@@ -128,41 +128,41 @@ class ModelManager:
             temp_file = self.models_file.with_suffix('.tmp')
             with open(temp_file, "w") as f:
                 json.dump(data, f, indent=2)
-            
+
             # Set secure permissions
             os.chmod(temp_file, 0o600)
-            
+
             # Atomic rename for safer file writing
             temp_file.replace(self.models_file)
-            
+
             print(f"Saved {len(self.models)} models to storage")
         except Exception as e:
             print(f"Error saving models: {e}")
 
     def add_model(self, metadata: ModelMetadata):
         """Add or update a model.
-        
+
         Args:
             metadata: Model metadata to add/update
-            
+
         Raises:
             ValueError: If metadata is invalid
         """
         if not isinstance(metadata, ModelMetadata):
             raise ValueError("Invalid model metadata type")
-        
+
         if not ModelMetadata.validate_input(metadata.to_dict()):
             raise ValueError("Invalid model metadata content")
-        
+
         self.models[metadata.finetune_id] = metadata
         self._save_models()
 
     def get_model(self, finetune_id: str) -> Optional[ModelMetadata]:
         """Get model by ID.
-        
+
         Args:
             finetune_id: ID of the model to retrieve
-            
+
         Raises:
             ValueError: If finetune_id format is invalid
         """
@@ -248,11 +248,11 @@ class ModelManager:
 
     def generate_image(self, endpoint: str, **params) -> Dict[str, Any]:
         """Generate an image using the specified endpoint and parameters.
-        
+
         Args:
             endpoint: API endpoint to use
             **params: Generation parameters
-            
+
         Raises:
             ValueError: If endpoint or parameters are invalid
         """
@@ -301,10 +301,10 @@ class ModelManager:
 
     def get_generation_status(self, inference_id: str) -> Dict[str, Any]:
         """Get generation status.
-        
+
         Args:
             inference_id: ID of the generation to check
-            
+
         Raises:
             ValueError: If inference_id format is invalid
         """
@@ -328,12 +328,12 @@ class ModelManager:
 if __name__ == "__main__":
     import os
     from getpass import getpass
-    
+
     # Get API key from environment variable or prompt
     api_key = os.getenv("FLUX_API_KEY")
     if not api_key:
         api_key = getpass("Enter your FLUX API key: ")
-    
+
     manager = ModelManager(api_key=api_key)
 
     # List all models

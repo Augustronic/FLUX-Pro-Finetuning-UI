@@ -19,16 +19,16 @@ from services.core.feature_flag_service import FeatureFlagService
 class InferenceUI(BaseUI):
     """
     Enhanced UI component for generating images with fine-tuned models.
-    
+
     Provides UI for generating images with fine-tuned models, including
     parameter configuration and result display. Uses feature flags and
     improved error handling.
     """
-    
+
     # API endpoints
     ENDPOINT_ULTRA = "flux-pro-1.1-ultra-finetuned"
     ENDPOINT_STANDARD = "flux-pro-finetuned"
-    
+
     def __init__(
         self,
         inference_service: InferenceService,
@@ -37,7 +37,7 @@ class InferenceUI(BaseUI):
     ):
         """
         Initialize the enhanced inference UI component.
-        
+
         Args:
             inference_service: Service for inference operations
             model_service: Service for model management
@@ -51,7 +51,7 @@ class InferenceUI(BaseUI):
         self.model_service = model_service
         self.feature_flags = feature_flag_service
         self.logger = logging.getLogger(__name__)
-    
+
     def generate_image(
         self,
         endpoint: str,
@@ -76,7 +76,7 @@ class InferenceUI(BaseUI):
     ) -> Tuple[Optional[np.ndarray], str]:
         """
         Generate an image using the selected model and parameters.
-        
+
         Args:
             endpoint: API endpoint to use
             model_choice: Selected model from dropdown
@@ -97,7 +97,7 @@ class InferenceUI(BaseUI):
             ultra_prompt_upsampling: Whether to enhance prompt for ultra endpoint
             safety_tolerance: Safety check level (0-6)
             **kwargs: Additional parameters for experimental features
-            
+
         Returns:
             Tuple of (numpy array of image or None, status message)
         """
@@ -106,18 +106,18 @@ class InferenceUI(BaseUI):
             model_id = self._get_model_id_from_choice(model_choice)
             if not model_id:
                 return None, "Error: Invalid model selection"
-                
+
             # Prepare additional parameters for experimental features
             additional_params = {}
-            
+
             # Add clip_skip if feature is enabled
             if self.feature_flags.is_enabled("advanced_generation_params", False) and "clip_skip" in kwargs:
                 additional_params["clip_skip"] = kwargs.get("clip_skip")
-                
+
             # Add scheduler if feature is enabled
             if self.feature_flags.is_enabled("advanced_generation_params", False) and "scheduler" in kwargs:
                 additional_params["scheduler"] = kwargs.get("scheduler")
-                
+
             # Generate image
             return self.inference_service.generate_image(
                 endpoint=endpoint,
@@ -140,7 +140,7 @@ class InferenceUI(BaseUI):
                 safety_tolerance=safety_tolerance,
                 **additional_params
             )
-            
+
         except InferenceError as e:
             error_message = f"Error generating image: {e.message}"
             # Check if the error has details
@@ -151,20 +151,20 @@ class InferenceUI(BaseUI):
         except Exception as e:
             self.logger.error(f"Unexpected error: {e}")
             return None, f"Unexpected error: {str(e)}"
-    
+
     def _get_model_id_from_choice(self, choice: str) -> str:
         """
         Extract model ID from formatted choice string.
-        
+
         Args:
             choice: Formatted choice string from dropdown
-            
+
         Returns:
             Model ID or empty string if not found
         """
         if not choice or not isinstance(choice, str):
             return ""
-            
+
         try:
             for model in self.model_service.list_models():
                 if model and self.model_service.format_model_choice(model) == choice:
@@ -173,11 +173,11 @@ class InferenceUI(BaseUI):
         except Exception as e:
             self.logger.error(f"Error extracting model ID: {e}")
             return ""
-    
+
     def create_ui(self) -> gr.Blocks:
         """
         Create the inference UI component.
-        
+
         Returns:
             Gradio Blocks component
         """
@@ -186,14 +186,14 @@ class InferenceUI(BaseUI):
             title_text = self.title if self.title else "Image Generation"
             desc_text = self.description if self.description else "Generate images using your finetuned models."
             self.create_section_header(title_text, desc_text)
-            
+
             # Important note
             gr.Markdown(
                 """
                 **Important**: Include the model's trigger word in your prompt!
                 """
             )
-            
+
             with gr.Row():
                 with gr.Column():
                     # Get valid endpoints based on feature flags
@@ -201,14 +201,14 @@ class InferenceUI(BaseUI):
                         ("FLUX 1.1 [pro] ultra Finetune", self.ENDPOINT_ULTRA),
                         ("FLUX.1 [pro] Finetune", self.ENDPOINT_STANDARD),
                     ]
-                    
+
                     # Add experimental endpoints if feature is enabled
                     if self.feature_flags.is_enabled("experimental_endpoints", False):
                         endpoint_choices.extend([
                             ("FLUX 2.0 [pro] Experimental", "flux-pro-2.0-experimental"),
                             ("FLUX SDXL [pro]", "flux-pro-sdxl")
                         ])
-                        
+
                     # Endpoint selection
                     endpoint = gr.Radio(
                         choices=endpoint_choices,
@@ -216,10 +216,10 @@ class InferenceUI(BaseUI):
                         label="Generation endpoint",
                         info="Select the generation endpoint to use.",
                     )
-                    
+
                     # Model selection
                     model_choices = self.inference_service.get_model_choices()
-                    
+
                     with gr.Row():
                         model_dropdown = gr.Dropdown(
                             choices=model_choices,
@@ -231,7 +231,7 @@ class InferenceUI(BaseUI):
                             )
                         )
                         refresh_btn = gr.Button("🔄 Refresh models")
-                        
+
                     prompt = gr.Textbox(
                         label="Prompt",
                         placeholder=(
@@ -240,7 +240,7 @@ class InferenceUI(BaseUI):
                         lines=3,
                         info="Include model's trigger word in prompt.",
                     )
-                    
+
                     # Show image prompt only if feature is enabled
                     image_prompt = None
                     if self.feature_flags.is_enabled("image_prompt_support", False):
@@ -266,33 +266,33 @@ class InferenceUI(BaseUI):
                             Enable it in the configuration to use image prompts.
                             """
                         )
-                        
+
                     negative_prompt = gr.Textbox(
                         label="Negative prompt (optional)",
                         placeholder="Enter things to avoid in the image.",
                         lines=2,
                     )
-                    
+
                 with gr.Column():
                     with gr.Group():
                         gr.Markdown("### Image parameters")
-                        
+
                         # Ultra endpoint parameters
                         with gr.Column(visible=True) as ultra_params:
                             # Get valid aspect ratios based on feature flags
                             aspect_ratios = ["21:9", "16:9", "3:2", "4:3", "1:1", "3:4", "2:3", "9:16", "9:21"]
-                            
+
                             # Add experimental aspect ratios if feature is enabled
                             if self.feature_flags.is_enabled("experimental_aspect_ratios", False):
                                 aspect_ratios.extend(["32:9", "1:2", "2:1"])
-                                
+
                             aspect_ratio = gr.Radio(
                                 choices=aspect_ratios,
                                 value="16:9",
                                 label="Aspect ratio",
                                 info="Select image dimensions ratio.",
                             )
-                            
+
                             strength = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
@@ -304,7 +304,7 @@ class InferenceUI(BaseUI):
                                     "(default: 1.2)."
                                 ),
                             )
-                            
+
                             # Show image prompt strength only if feature is enabled
                             if self.feature_flags.is_enabled("image_prompt_support", False):
                                 image_prompt_strength = gr.Slider(
@@ -317,24 +317,24 @@ class InferenceUI(BaseUI):
                                         "Blend between the prompt and the image prompt (0-1)."
                                     ),
                                 )
-                                
+
                             ultra_prompt_upsampling = gr.Checkbox(
                                 label="Prompt upsampling",
                                 value=False,
                                 info="Use AI to enhance the prompt (may produce more creative results)",
                             )
-                            
+
                         # Standard endpoint parameters
                         with gr.Column(visible=False) as standard_params:
                             with gr.Row():
                                 # Get dimension limits based on feature flags
                                 min_dim = 256
                                 max_dim = 1440
-                                
+
                                 # Allow larger dimensions if feature is enabled
                                 if self.feature_flags.is_enabled("high_resolution", False):
                                     max_dim = 2048
-                                    
+
                                 width = gr.Slider(
                                     minimum=min_dim,
                                     maximum=max_dim,
@@ -351,15 +351,15 @@ class InferenceUI(BaseUI):
                                     label="Height",
                                     info="Must be a multiple of 32",
                                 )
-                                
+
                             # Get steps range based on feature flags
                             min_steps = 1
                             max_steps = 50
-                            
+
                             # Allow more steps if feature is enabled
                             if self.feature_flags.is_enabled("extended_steps", False):
                                 max_steps = 100
-                                
+
                             num_inference_steps = gr.Slider(
                                 minimum=min_steps,
                                 maximum=max_steps,
@@ -371,7 +371,7 @@ class InferenceUI(BaseUI):
                                     "(quality vs speed)"
                                 ),
                             )
-                            
+
                             strength_standard = gr.Slider(
                                 minimum=0.1,
                                 maximum=2.0,
@@ -382,16 +382,16 @@ class InferenceUI(BaseUI):
                                     "How strongly to apply model's style (0.1-2.0)."
                                 ),
                             )
-                            
+
                             # Get guidance range based on feature flags
                             min_guidance = 1.5
                             max_guidance = 5.0
-                            
+
                             # Allow extended guidance range if feature is enabled
                             if self.feature_flags.is_enabled("extended_guidance_range", False):
                                 min_guidance = 1.0
                                 max_guidance = 10.0
-                                
+
                             guidance_scale = gr.Slider(
                                 minimum=min_guidance,
                                 maximum=max_guidance,
@@ -400,13 +400,13 @@ class InferenceUI(BaseUI):
                                 label="Guidance Scale",
                                 info="Controls prompt adherence strength",
                             )
-                            
+
                             prompt_upsampling = gr.Checkbox(
                                 label="Prompt upsampling",
                                 value=False,
                                 info="Use AI to enhance the prompt (may produce more creative results)",
                             )
-                            
+
                         # Common parameters
                         seed = gr.Number(
                             label="Seed",
@@ -419,15 +419,15 @@ class InferenceUI(BaseUI):
                                 "value for reproducible results."
                             ),
                         )
-                        
+
                         # Get safety tolerance range based on feature flags
                         min_safety = 0
                         max_safety = 6
-                        
+
                         # Allow higher safety tolerance if feature is enabled
                         if self.feature_flags.is_enabled("extended_safety_tolerance", False):
                             max_safety = 10
-                            
+
                         safety_tolerance = gr.Slider(
                             minimum=min_safety,
                             maximum=max_safety,
@@ -436,21 +436,21 @@ class InferenceUI(BaseUI):
                             label="Safety tolerance",
                             info=f"{min_safety} (most strict) to {max_safety} (least strict).",
                         )
-                        
+
                         # Get output formats based on feature flags
                         output_formats = ["jpeg", "png"]
-                        
+
                         # Add experimental output formats if feature is enabled
                         if self.feature_flags.is_enabled("experimental_output_formats", False):
                             output_formats.extend(["webp", "tiff"])
-                            
+
                         output_format = gr.Radio(
                             choices=output_formats,
                             value="jpeg",
                             label="Output format",
                             info="Select image format.",
                         )
-                        
+
                         # Add advanced parameters if feature is enabled
                         advanced_params = {}
                         if self.feature_flags.is_enabled("advanced_generation_params", False):
@@ -471,7 +471,7 @@ class InferenceUI(BaseUI):
                                 )
                                 advanced_params["clip_skip"] = clip_skip
                                 advanced_params["scheduler"] = scheduler
-                        
+
             # Output section
             with gr.Row():
                 with gr.Column():
@@ -481,7 +481,7 @@ class InferenceUI(BaseUI):
                     status_text = gr.Textbox(
                         label="Status", interactive=False
                     )
-                    
+
                 with gr.Column():
                     output_image = gr.Image(
                         label="Generated Image",
@@ -489,19 +489,19 @@ class InferenceUI(BaseUI):
                         interactive=False,
                         show_download_button=True
                     )
-                    
+
             # Event handlers
             def refresh_models():
                 self.model_service.refresh_models()
                 choices = self.inference_service.get_model_choices()
                 return gr.update(choices=choices, value=choices[0] if choices else None)
-                
+
             refresh_btn.click(
                 fn=refresh_models,
                 inputs=[],
                 outputs=[model_dropdown]
             )
-            
+
             def toggle_endpoint_params(choice):
                 is_ultra = choice == self.ENDPOINT_ULTRA
                 is_standard = choice == self.ENDPOINT_STANDARD
@@ -510,51 +510,51 @@ class InferenceUI(BaseUI):
                     gr.update(visible=is_ultra),
                     gr.update(visible=is_standard)
                 ]
-                
+
             endpoint.change(
                 fn=toggle_endpoint_params,
                 inputs=[endpoint],
                 outputs=[ultra_params, standard_params]
             )
-            
+
             # Generation inputs
             generate_inputs = [
                 endpoint, model_dropdown, prompt, negative_prompt,
                 aspect_ratio, num_inference_steps, guidance_scale, strength, strength_standard, seed,
                 width, height
             ]
-            
+
             # Add image prompt if feature is enabled
             if self.feature_flags.is_enabled("image_prompt_support", False):
                 generate_inputs.append(image_prompt)
             else:
                 generate_inputs.append(None)
-                
+
             generate_inputs.extend([
                 output_format, prompt_upsampling
             ])
-            
+
             # Add image prompt strength if feature is enabled
             if self.feature_flags.is_enabled("image_prompt_support", False):
                 generate_inputs.append(image_prompt_strength)
             else:
                 generate_inputs.append(0.1)
-                
+
             generate_inputs.extend([
                 ultra_prompt_upsampling, safety_tolerance
             ])
-            
+
             # Add advanced parameters if feature is enabled
             if self.feature_flags.is_enabled("advanced_generation_params", False):
                 generate_inputs.extend([
                     advanced_params["clip_skip"],
                     advanced_params["scheduler"]
                 ])
-                
+
             generate_btn.click(
                 fn=self.generate_image,
                 inputs=generate_inputs,
                 outputs=[output_image, status_text],
             )
-            
+
         return app

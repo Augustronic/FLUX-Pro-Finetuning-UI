@@ -36,7 +36,7 @@ def add_numbers(a, b):
         stderr=subprocess.PIPE
     )
     output, error = process.communicate(input=f"{a} {b}\n".encode())
-    
+
     if error:
         return f"Error: {error.decode()}"
     return float(output.decode().strip())
@@ -108,14 +108,14 @@ import subprocess
 
 def apply_sepia(input_path):
     output_path = "output.png"
-    
+
     process = subprocess.Popen(
         ['./target/release/sepia', input_path, output_path], 
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE
     )
     process.wait()
-    
+
     return output_path
 
 demo = gr.Interface(

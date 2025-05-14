@@ -330,7 +330,7 @@ with gr.Blocks() as demo:
     textbox = gr.Textbox()
     number = gr.Number()
     textbox.submit(count, inputs=[textbox, words], outputs=[number, words])
-    
+
 demo.launch()
 ```
 

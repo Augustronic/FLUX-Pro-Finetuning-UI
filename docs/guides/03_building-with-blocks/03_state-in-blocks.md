@@ -70,7 +70,7 @@ class NonDeepCopyable:
         from threading import Lock
         self.counter = 0
         self.lock = Lock()  # Lock objects cannot be deepcopied
-    
+
     def increment(self):
         with self.lock:
             self.counter += 1
@@ -98,7 +98,7 @@ with gr.Blocks() as demo:
     counter = gr.Number(label="Counter Value")
     increment_btn = gr.Button("Increment Counter")
     increment_btn.click(increment_counter, inputs=None, outputs=counter)
-    
+
     # Initialize instance when page loads
     demo.load(initialize_instance, inputs=None, outputs=output)    
     # Clean up instance when page is closed/refreshed

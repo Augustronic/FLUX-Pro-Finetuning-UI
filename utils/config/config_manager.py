@@ -28,7 +28,7 @@ class ConfigManager:
         env: Optional[str] = None
     ):
         """Initialize configuration manager.
-        
+
         Args:
             config_path: Path to config file (optional)
             env: Environment name (optional)
@@ -38,7 +38,7 @@ class ConfigManager:
         self.env = env or os.getenv("FLUX_ENV", "development")
         self.config_path = config_path or "config.json"
         self.config: Dict[str, Any] = {}
-        
+
         # Define validation rules
         self.validation_rules = [
             ValidationRule(
@@ -79,31 +79,31 @@ class ConfigManager:
 
     def load_config(self) -> None:
         """Load and validate configuration.
-        
+
         Raises:
             ConfigError: If configuration is invalid or missing
         """
         try:
             # Load base config
             base_config = self._load_config_file(self.config_path)
-            
+
             # Load environment-specific config
             env_config_path = f"config.{self.env}.json"
             env_config = self._load_config_file(env_config_path) if Path(env_config_path).exists() else {}
-            
+
             # Merge configs
             self.config = self._merge_configs(base_config, env_config)
-            
+
             # Validate config
             self._validate_config()
-            
+
             # Apply environment variables overrides
             self._apply_env_overrides()
-            
+
             self.logger.info(
                 f"Configuration loaded successfully for environment: {self.env}"
             )
-            
+
         except Exception as e:
             raise ConfigError(
                 f"Failed to load configuration: {str(e)}",
@@ -116,11 +116,11 @@ class ConfigManager:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value.
-        
+
         Args:
             key: Configuration key
             default: Default value if key not found
-            
+
         Returns:
             Configuration value
         """
@@ -128,20 +128,20 @@ class ConfigManager:
 
     def _load_config_file(self, path: str) -> Dict[str, Any]:
         """Load configuration from file.
-        
+
         Args:
             path: Path to config file
-            
+
         Returns:
             Configuration dictionary
-            
+
         Raises:
             ConfigError: If file cannot be loaded
         """
         try:
             if not Path(path).exists():
                 return {}
-                
+
             with open(path, 'r') as f:
                 return json.load(f)
         except Exception as e:
@@ -160,16 +160,16 @@ class ConfigManager:
         override: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Merge configuration dictionaries.
-        
+
         Args:
             base: Base configuration
             override: Override configuration
-            
+
         Returns:
             Merged configuration
         """
         result = base.copy()
-        
+
         for key, value in override.items():
             if (
                 key in result and 
@@ -179,12 +179,12 @@ class ConfigManager:
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
-                
+
         return result
 
     def _validate_config(self) -> None:
         """Validate configuration against schema.
-        
+
         Raises:
             ConfigError: If configuration is invalid
         """
@@ -206,11 +206,11 @@ class ConfigManager:
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides to configuration."""
         env_prefix = "FLUX_"
-        
+
         for key in self.config.keys():
             env_key = f"{env_prefix}{key.upper()}"
             env_value = os.getenv(env_key)
-            
+
             if env_value is not None:
                 try:
                     # Try to parse as JSON for complex values
@@ -218,12 +218,12 @@ class ConfigManager:
                 except json.JSONDecodeError:
                     # Use raw string if not valid JSON
                     self.config[key] = env_value
-                    
+
                 self.logger.info(f"Applied environment override for {key}")
 
     def get_schema(self) -> Dict[str, Any]:
         """Get configuration schema.
-        
+
         Returns:
             Configuration schema
         """

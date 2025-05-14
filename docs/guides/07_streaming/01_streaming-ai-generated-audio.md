@@ -72,7 +72,7 @@ def generate_response(audio):
                                               "Keep your answers short and do not include the phrase 'Magic 8 Ball' in your response. If the question does not make sense or is off-topic, say 'Foolish questions get foolish answers.'"
                                               "For example, 'Magic 8 Ball, should I get a dog?', 'A dog is ready for you but are you ready for the dog?'")},
                 {"role": "user", "content": f"Magic 8 Ball please answer this question -  {question}"}]
-    
+
     response = client.chat_completion(messages, max_tokens=64, seed=random.randint(1, 5000),
                                       model="mistralai/Mistral-7B-Instruct-v0.3")
 

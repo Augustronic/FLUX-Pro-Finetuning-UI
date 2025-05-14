@@ -22,7 +22,7 @@ class MainUI(UIComponent):
 
     def create(self, parent: Optional[gr.Blocks] = None) -> gr.Blocks:
         """Create the main UI interface.
-        
+
         Args:
             parent: Optional parent Blocks instance
         """
@@ -118,7 +118,7 @@ class MainUI(UIComponent):
 
 def create_ui() -> gr.Blocks:
     """Create and return the main UI instance.
-    
+
     Returns:
         The Gradio Blocks interface
     """

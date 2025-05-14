@@ -38,7 +38,7 @@ class ModelConfig:
     VALID_MODES: Final[List[str]] = ["general", "character", "style", "product"]
     VALID_TYPES: Final[List[str]] = ["lora", "full"]
     VALID_PRIORITIES: Final[List[str]] = ["speed", "quality", "high_res_only"]
-    
+
     # Parameter ranges
     LORA_RANK_RANGE: Final[Dict[str, int]] = {"min": 4, "max": 128}
     ITERATIONS_RANGE: Final[Dict[str, int]] = {"min": 100, "max": 1000}
@@ -57,7 +57,7 @@ class GenerationConfig:
         "21:9", "16:9", "3:2", "4:3", "1:1",
         "3:4", "2:3", "9:16", "9:21"
     ]
-    
+
     # Parameter ranges
     STEPS_RANGE: Final[Dict[str, int]] = {"min": 1, "max": 50, "default": 40}
     GUIDANCE_RANGE: Final[Dict[str, float]] = {

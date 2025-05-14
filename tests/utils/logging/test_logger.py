@@ -53,7 +53,7 @@ class TestLogger(unittest.TestCase):
 
         test_message = "Test log message"
         extra_data = {"test_key": "test_value"}
-        
+
         logger.info(test_message, extra=extra_data)
 
         log_file = Path(self.test_log_dir) / f"{self.test_logger_name}.log"

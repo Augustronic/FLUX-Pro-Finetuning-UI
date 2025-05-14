@@ -83,7 +83,7 @@ from pydub import AudioSegment
 def response(state: AppState):
     if not state.pause_detected and not state.started_talking:
         return None, AppState()
-    
+
     audio_buffer = io.BytesIO()
 
     segment = AudioSegment(
@@ -96,11 +96,11 @@ def response(state: AppState):
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         f.write(audio_buffer.getvalue())
-    
+
     state.conversation.append({"role": "user",
                                 "content": {"path": f.name,
                                 "mime_type": "audio/wav"}})
-    
+
     output_buffer = b""
 
     for mp3_bytes in speaking(audio_buffer.getvalue()):
@@ -109,7 +109,7 @@ def response(state: AppState):
 
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
         f.write(output_buffer)
-    
+
     state.conversation.append({"role": "assistant",
                     "content": {"path": f.name,
                                 "mime_type": "audio/mp3"}})
