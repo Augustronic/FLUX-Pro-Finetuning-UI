@@ -37,16 +37,21 @@ var/
 
 # Project-specific ignores
 config.json
+config/config.json
 model_metadata.json
 model_finetuned_ids.txt
 latest_finetune.json
 finetune_response.json
 *.zip
-generated_images/*
+generated_images/
 data/
+datasets/
+docs/
+memory-bank/
 
 # Log files
 *.log
+logs/
 
 # Local data / configuration
 .clinerules
